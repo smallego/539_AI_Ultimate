@@ -1,0 +1,82 @@
+[2026-07-04 14:58:36] INFO  Logger test OK
+[2026-07-04 15:02:18] INFO  Run all started
+[2026-07-04 15:02:21] INFO  Update completed
+[2026-07-04 15:02:22] INFO  Analysis completed
+[2026-07-04 15:02:22] INFO  Prediction completed
+[2026-07-04 15:02:22] INFO  Backtest completed
+[2026-07-04 15:02:23] INFO  Dashboard completed
+[2026-07-04 15:02:23] INFO  Run all finished
+[2026-07-04 15:04:12] INFO  Run all started
+[2026-07-04 15:04:15] INFO  Update completed
+[2026-07-04 15:04:16] INFO  Analysis completed
+[2026-07-04 15:04:16] INFO  Prediction completed
+[2026-07-04 15:04:16] INFO  Backtest completed
+[2026-07-04 15:04:17] INFO  Dashboard completed
+[2026-07-04 15:04:17] INFO  Run all finished
+[2026-07-04 15:04:34] INFO  Run all started
+[2026-07-04 15:04:34] INFO  Update history data started
+[2026-07-04 15:04:37] INFO  Update history data completed
+[2026-07-04 15:04:37] INFO  Analysis started
+[2026-07-04 15:04:37] INFO  Analysis completed
+[2026-07-04 15:04:38] INFO  Prediction started
+[2026-07-04 15:04:38] INFO  Prediction completed
+[2026-07-04 15:04:38] INFO  Backtest started
+[2026-07-04 15:04:39] INFO  Backtest completed
+[2026-07-04 15:04:39] INFO  Dashboard started
+[2026-07-04 15:04:40] INFO  Dashboard completed
+[2026-07-04 15:04:40] INFO  Run all finished
+[2026-07-04 15:07:22] INFO  Database backup completed: C:\Users\USER\Desktop\539_AI_Ultimate\database\backup\history_20260704_150722.db
+[2026-07-04 15:08:29] INFO  Database backup completed: C:\Users\USER\Desktop\539_AI_Ultimate\database\backup\history_20260704_150829.db
+[2026-07-04 15:14:03] INFO  Run all started
+[2026-07-04 15:14:04] INFO  Database Backup started
+[2026-07-04 15:14:04] INFO  Database backup completed: C:\Users\USER\Desktop\539_AI_Ultimate\database\backup\history_20260704_151404.db
+[2026-07-04 15:14:04] INFO  Database Backup completed
+[2026-07-04 15:14:04] INFO  Update history data started
+[2026-07-04 15:14:07] INFO  Update history data completed
+[2026-07-04 15:14:07] INFO  Analysis started
+[2026-07-04 15:14:08] INFO  Analysis completed
+[2026-07-04 15:14:08] INFO  Prediction started
+[2026-07-04 15:14:08] INFO  Prediction completed
+[2026-07-04 15:14:08] INFO  Backtest started
+[2026-07-04 15:14:09] INFO  Backtest completed
+[2026-07-04 15:14:09] INFO  Dashboard started
+[2026-07-04 15:14:10] INFO  Dashboard completed
+[2026-07-04 15:14:10] INFO  Run all finished
+[2026-07-04 15:15:19] INFO  Run all started
+[2026-07-04 15:15:19] INFO  Database Backup started
+[2026-07-04 15:15:20] INFO  Database backup completed: C:\Users\USER\Desktop\539_AI_Ultimate\database\backup\history_20260704_151520.db
+[2026-07-04 15:15:20] INFO  Database Backup completed
+[2026-07-04 15:15:20] INFO  Update history data started
+[2026-07-04 15:15:23] INFO  Update history data completed
+[2026-07-04 15:15:23] INFO  Analysis started
+[2026-07-04 15:15:24] INFO  Analysis completed
+[2026-07-04 15:15:24] INFO  Prediction started
+[2026-07-04 15:15:24] INFO  Prediction completed
+[2026-07-04 15:15:24] INFO  Backtest started
+[2026-07-04 15:15:25] INFO  Backtest completed
+[2026-07-04 15:15:25] INFO  Dashboard started
+[2026-07-04 15:15:26] INFO  Dashboard completed
+[2026-07-04 15:15:26] INFO  Run all finished
+[2026-07-04 16:39:02] INFO  Opening Taiwan Lottery official history download page
+[2026-07-04 16:41:40] INFO  Run all started
+[2026-07-04 16:41:40] INFO  Database Backup started
+[2026-07-04 16:41:40] INFO  Database backup completed: C:\Users\USER\Desktop\539_AI_Ultimate\database\backup\history_20260704_164140.db
+[2026-07-04 16:41:41] INFO  Database Backup completed
+[2026-07-04 16:41:41] INFO  Open official download page started
+[2026-07-04 16:41:41] INFO  Opening Taiwan Lottery official history download page
+[2026-07-04 16:41:41] INFO  Open official download page completed
+[2026-07-04 16:41:41] INFO  Update history data started
+[2026-07-04 16:41:44] INFO  Update history data completed
+[2026-07-04 16:41:45] INFO  Analysis started
+[2026-07-04 16:41:45] INFO  Analysis completed
+[2026-07-04 16:41:45] INFO  Prediction started
+[2026-07-04 16:41:46] INFO  Prediction completed
+[2026-07-04 16:41:46] INFO  Backtest started
+[2026-07-04 16:41:46] INFO  Backtest completed
+[2026-07-04 16:41:46] INFO  Dashboard started
+[2026-07-04 16:41:47] INFO  Dashboard completed
+[2026-07-04 16:41:47] INFO  Run all finished
+[2026-07-04 16:44:54] INFO  CSV import started. Found 2 file(s).
+[2026-07-04 16:44:54] INFO  Reading CSV: 今彩539_2025(4).csv
+[2026-07-04 16:44:55] INFO  Reading CSV: 今彩539_2026(4).csv
+[2026-07-04 16:44:56] INFO  CSV import completed. Processed=439, Added=0, Total=439
