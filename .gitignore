@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# VS Code
+.vscode/
+
+# Logs
+logs/
+
+# Database backups
+database/backup/
+
+# Generated reports
+reports/*.csv
+dashboard/*.xlsx
+
+# Cache
+.pytest_cache/
