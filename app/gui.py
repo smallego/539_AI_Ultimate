@@ -1,5 +1,3 @@
-# app/gui.py
-
 import os
 import sys
 from pathlib import Path
@@ -7,12 +5,11 @@ import tkinter as tk
 from tkinter import messagebox
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-sys.path.append(str(BASE_DIR))
+sys.path.insert(0, str(BASE_DIR))
 sys.path.append(str(BASE_DIR / "app"))
 sys.path.append(str(BASE_DIR / "core"))
-sys.path.append(str(BASE_DIR / "dashboard"))
 
-DASHBOARD_V2 = BASE_DIR / "dashboard" / "Dashboard_V2.xlsx"
+DASHBOARD_V4 = BASE_DIR / "dashboard" / "Dashboard_V4.xlsx"
 
 
 def safe_run(name, func):
@@ -24,39 +21,39 @@ def safe_run(name, func):
 
 
 def update_api():
-    from api_update import update_from_api
+    from app.api_update import update_from_api
     safe_run("更新官方 API", update_from_api)
 
 
 def run_ai_scorer():
-    from scorer import main
+    from core.scorer import main
     safe_run("AI 今日預測", main)
 
 
 def run_backtest():
-    from backtest import run_backtest
+    from core.backtest import run_backtest
     safe_run("執行回測", run_backtest)
 
 
 def run_tuner():
-    from tuner import main
+    from core.tuner import main
     safe_run("Auto Tuning", main)
 
 
 def build_dashboard():
-    from dashboard_v2 import build_dashboard_v2
-    safe_run("建立 Dashboard V2", build_dashboard_v2)
+    from dashboard.dashboard_v4 import build_dashboard_v4
+    safe_run("建立 Dashboard V4", build_dashboard_v4)
 
 
 def open_dashboard():
-    if DASHBOARD_V2.exists():
-        os.startfile(DASHBOARD_V2)
+    if DASHBOARD_V4.exists():
+        os.startfile(DASHBOARD_V4)
     else:
-        messagebox.showwarning("找不到檔案", "請先建立 Dashboard V2")
+        messagebox.showwarning("找不到檔案", "請先建立 Dashboard V4")
 
 
 def run_all():
-    from main import run_pipeline
+    from app.main import run_pipeline
     safe_run("一鍵 Run All", run_pipeline)
 
 
@@ -66,11 +63,7 @@ def main():
     root.geometry("420x430")
     root.resizable(False, False)
 
-    title = tk.Label(
-        root,
-        text="539 AI Ultimate Professional",
-        font=("Arial", 16, "bold")
-    )
+    title = tk.Label(root, text="539 AI Ultimate Professional", font=("Arial", 16, "bold"))
     title.pack(pady=20)
 
     buttons = [
@@ -78,15 +71,14 @@ def main():
         ("AI 今日預測", run_ai_scorer),
         ("執行回測", run_backtest),
         ("Auto Tuning", run_tuner),
-        ("建立 Dashboard V2", build_dashboard),
-        ("開啟 Dashboard V2", open_dashboard),
+        ("建立 Dashboard V4", build_dashboard),
+        ("開啟 Dashboard V4", open_dashboard),
         ("一鍵 Run All", run_all),
         ("離開", root.destroy),
     ]
 
     for text, command in buttons:
-        btn = tk.Button(root, text=text, width=28, height=2, command=command)
-        btn.pack(pady=5)
+        tk.Button(root, text=text, width=28, height=2, command=command).pack(pady=5)
 
     root.mainloop()
 

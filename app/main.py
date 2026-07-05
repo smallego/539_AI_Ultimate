@@ -1,24 +1,21 @@
-# app/main.py
-
 from pathlib import Path
 import sys
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-sys.path.append(str(BASE_DIR))
+sys.path.insert(0, str(BASE_DIR))
 sys.path.append(str(BASE_DIR / "app"))
 sys.path.append(str(BASE_DIR / "core"))
-sys.path.append(str(BASE_DIR / "dashboard"))
 
 from app.api_update import update_from_api
 from core.backtest import run_backtest
 from core.scorer import main as run_scorer
-from dashboard_v2 import build_dashboard_v2
+from dashboard.dashboard_v4 import build_dashboard_v4
 from core.logger import log, log_error
 
 
 def run_pipeline():
     try:
-        log("V3.1 pipeline started")
+        log("V4 pipeline started")
 
         log("Step 1: API update")
         update_from_api()
@@ -29,16 +26,16 @@ def run_pipeline():
         log("Step 3: Backtest")
         run_backtest()
 
-        log("Step 4: Dashboard V2")
-        build_dashboard_v2()
+        log("Step 4: Dashboard V4")
+        build_dashboard_v4()
 
-        log("V3.1 pipeline finished")
+        log("V4 pipeline finished")
         print("===================================")
-        print("V3.1 Pipeline 全部完成")
+        print("V4 Pipeline 全部完成")
         print("===================================")
 
     except Exception as e:
-        log_error("V3.1 pipeline failed", e)
+        log_error("V4 pipeline failed", e)
         raise
 
 
