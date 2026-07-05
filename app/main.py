@@ -1,34 +1,46 @@
+# app/main.py
+
 from pathlib import Path
-from datetime import datetime
+import sys
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.append(str(BASE_DIR))
+sys.path.append(str(BASE_DIR / "app"))
+sys.path.append(str(BASE_DIR / "core"))
+sys.path.append(str(BASE_DIR / "dashboard"))
 
-FOLDERS = [
-    "data",
-    "database",
-    "dashboard",
-    "reports",
-    "logs",
-    "config",
-]
-
-
-def init_project():
-    for folder in FOLDERS:
-        (BASE_DIR / folder).mkdir(exist_ok=True)
+from app.api_update import update_from_api
+from core.backtest import run_backtest
+from core.scorer import main as run_scorer
+from dashboard_v2 import build_dashboard_v2
+from core.logger import log, log_error
 
 
-def main():
-    init_project()
+def run_pipeline():
+    try:
+        log("V3.1 pipeline started")
 
-    print("===================================")
-    print(" 539 AI Ultimate V8")
-    print(" 系統啟動成功")
-    print("===================================")
-    print(f"專案位置：{BASE_DIR}")
-    print(f"啟動時間：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("===================================")
+        log("Step 1: API update")
+        update_from_api()
+
+        log("Step 2: AI scorer")
+        run_scorer()
+
+        log("Step 3: Backtest")
+        run_backtest()
+
+        log("Step 4: Dashboard V2")
+        build_dashboard_v2()
+
+        log("V3.1 pipeline finished")
+        print("===================================")
+        print("V3.1 Pipeline 全部完成")
+        print("===================================")
+
+    except Exception as e:
+        log_error("V3.1 pipeline failed", e)
+        raise
 
 
 if __name__ == "__main__":
-    main()
+    run_pipeline()

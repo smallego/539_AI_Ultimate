@@ -1,46 +1,51 @@
 # app/gui.py
 
-import subprocess
 import os
+import sys
 from pathlib import Path
 import tkinter as tk
 from tkinter import messagebox
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.append(str(BASE_DIR))
+sys.path.append(str(BASE_DIR / "app"))
+sys.path.append(str(BASE_DIR / "core"))
+sys.path.append(str(BASE_DIR / "dashboard"))
+
 DASHBOARD_V2 = BASE_DIR / "dashboard" / "Dashboard_V2.xlsx"
 
 
-def run_command(command):
+def safe_run(name, func):
     try:
-        subprocess.run(
-            command,
-            cwd=BASE_DIR,
-            shell=True,
-            check=True
-        )
-        messagebox.showinfo("完成", f"執行完成：{command}")
-    except subprocess.CalledProcessError:
-        messagebox.showerror("錯誤", f"執行失敗：{command}")
+        func()
+        messagebox.showinfo("完成", f"{name} 完成")
+    except Exception as e:
+        messagebox.showerror("錯誤", f"{name} 失敗\n\n{e}")
 
 
 def update_api():
-    run_command("python app\\api_update.py")
+    from api_update import update_from_api
+    safe_run("更新官方 API", update_from_api)
 
 
 def run_ai_scorer():
-    run_command("python core\\scorer.py")
+    from scorer import main
+    safe_run("AI 今日預測", main)
 
 
 def run_backtest():
-    run_command("python core\\backtest.py")
+    from backtest import run_backtest
+    safe_run("執行回測", run_backtest)
 
 
 def run_tuner():
-    run_command("python core\\tuner.py")
+    from tuner import main
+    safe_run("Auto Tuning", main)
 
 
 def build_dashboard():
-    run_command("python dashboard\\dashboard_v2.py")
+    from dashboard_v2 import build_dashboard_v2
+    safe_run("建立 Dashboard V2", build_dashboard_v2)
 
 
 def open_dashboard():
@@ -51,7 +56,8 @@ def open_dashboard():
 
 
 def run_all():
-    run_command("run_all.bat")
+    from main import run_pipeline
+    safe_run("一鍵 Run All", run_pipeline)
 
 
 def main():
@@ -79,13 +85,7 @@ def main():
     ]
 
     for text, command in buttons:
-        btn = tk.Button(
-            root,
-            text=text,
-            width=28,
-            height=2,
-            command=command
-        )
+        btn = tk.Button(root, text=text, width=28, height=2, command=command)
         btn.pack(pady=5)
 
     root.mainloop()
