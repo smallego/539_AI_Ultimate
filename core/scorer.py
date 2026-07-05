@@ -16,7 +16,12 @@ from config import (
     COOCCURRENCE_WEIGHT,
     BALANCE_WEIGHT,
 )
+
 from engine import build_final_weights, get_all_draws, get_numbers
+from ai_scorer import ai_score
+
+
+AI_WEIGHT = 0.25
 
 
 def build_cooccurrence(draws):
@@ -29,10 +34,10 @@ def build_cooccurrence(draws):
 
     max_count = max(pair_count.values()) if pair_count else 1
 
-    for pair in pair_count:
-        pair_count[pair] = pair_count[pair] / max_count
-
-    return pair_count
+    return {
+        pair: count / max_count
+        for pair, count in pair_count.items()
+    }
 
 
 def weighted_sample(weights, k=5):
@@ -54,6 +59,19 @@ def weighted_sample(weights, k=5):
     return sorted(result)
 
 
+def cooccurrence_score(nums, co_matrix):
+    pairs = list(combinations(sorted(nums), 2))
+
+    if not pairs:
+        return 0
+
+    total = 0
+    for a, b in pairs:
+        total += co_matrix.get((a, b), 0)
+
+    return total / len(pairs)
+
+
 def balance_score(nums):
     odd = sum(1 for n in nums if n % 2 == 1)
     low = sum(1 for n in nums if n <= 19)
@@ -66,35 +84,25 @@ def balance_score(nums):
     return odd_score * 0.4 + low_score * 0.4 + sum_score * 0.2
 
 
-def cooccurrence_score(nums, co_matrix):
-    pairs = list(combinations(sorted(nums), 2))
-
-    if not pairs:
-        return 0
-
-    score = 0
-
-    for a, b in pairs:
-        score += co_matrix.get((a, b), 0)
-
-    return score / len(pairs)
-
-
 def score_set(nums, weights, co_matrix):
     weight_score = sum(weights[n] for n in nums) / 5
     co_score = cooccurrence_score(nums, co_matrix)
     bal_score = balance_score(nums)
 
+    ai_result = ai_score(nums)
+    ai_score_normalized = ai_result["ai_score"] / 100
+
     final_score = (
-    weight_score * SCORER_WEIGHT +
-    co_score * COOCCURRENCE_WEIGHT +
-    bal_score * BALANCE_WEIGHT
-)
+        weight_score * SCORER_WEIGHT +
+        co_score * COOCCURRENCE_WEIGHT +
+        bal_score * BALANCE_WEIGHT +
+        ai_score_normalized * AI_WEIGHT
+    )
 
     return final_score
 
 
-def  too_similar(new_set, selected_sets, max_overlap=MAX_OVERLAP):
+def too_similar(new_set, selected_sets, max_overlap=MAX_OVERLAP):
     new_set = set(new_set)
 
     for old in selected_sets:
@@ -106,8 +114,8 @@ def  too_similar(new_set, selected_sets, max_overlap=MAX_OVERLAP):
 
 def generate_candidate_sets(weights, count=CANDIDATE_COUNT):
     candidates = set()
-
     attempts = 0
+
     while len(candidates) < count and attempts < count * 10:
         nums = tuple(weighted_sample(weights, 5))
         candidates.add(nums)
@@ -149,7 +157,7 @@ def main():
 
     print("===================================")
     print("539 AI Ultimate - Candidate Scorer")
-    print("B-Model V5")
+    print("B-Model V2.0 + AI Score")
     print("===================================")
     print(f"候選組合數：{len(candidates)}")
     print("最佳 5 組：")
@@ -157,7 +165,12 @@ def main():
 
     for i, nums in enumerate(best_sets, start=1):
         score = score_set(nums, weights, co_matrix)
-        print(f"第 {i} 組：{' '.join(f'{n:02d}' for n in nums)}  分數：{score:.4f}")
+        ai = ai_score(nums)
+
+        print(
+            f"第 {i} 組：{' '.join(f'{n:02d}' for n in nums)}  "
+            f"Final Score：{score:.4f}  AI Score：{ai['ai_score']}"
+        )
 
     print("===================================")
 
