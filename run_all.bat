@@ -1,53 +1,34 @@
 @echo off
-chcp 65001 >nul
-title 539 AI Ultimate Professional
-color 0A
+chcp 65001 > nul
+title 539 AI Ultimate v1.3
 
-echo ==========================================
-echo        539 AI Ultimate Professional
-echo ==========================================
-
-python -c "from core.logger import log; log('Run all started')"
-
-call :RunStep "Database Backup" "python core\backup.py"
-call :RunStep "Open official download page" "python app\downloader.py"
-call :RunStep "Update history data" "python app\update.py"
-call :RunStep "Analysis" "python app\analysis.py"
-call :RunStep "Prediction" "python app\predict.py"
-call :RunStep "Backtest" "python core\backtest.py"
-call :RunStep "Dashboard" "python dashboard\dashboard.py"
-python -c "from core.logger import log; log('Run all finished')"
+echo ======================================
+echo 539 AI Ultimate Professional
+echo ======================================
 
 echo.
-echo ==========================================
-echo ALL TASKS COMPLETED SUCCESSFULLY
-echo ==========================================
+echo [1/5] 更新官方API...
+python app\api_update.py
+
+echo.
+echo [2/5] 更新AI權重...
+python core\engine.py
+
+echo.
+echo [3/5] 產生最佳組合...
+python core\scorer.py
+
+echo.
+echo [4/5] 回測模型...
+python core\backtest.py
+
+echo.
+echo [5/5] 更新Dashboard...
+python dashboard\dashboard.py
+
+echo.
+echo ======================================
+echo 全部完成！
+echo ======================================
 
 pause
-exit /b
-
-:RunStep
-echo.
-echo [%~1]
-
-python -c "from core.logger import log; log('%~1 started')"
-
-cmd /c %~2
-
-if errorlevel 1 (
-    python -c "from core.logger import log; log('%~1 FAILED', 'ERROR')"
-
-    echo.
-    echo ==========================================
-    echo ERROR:
-    echo %~1 FAILED
-    echo Program stopped.
-    echo ==========================================
-
-    pause
-    exit /b 1
-)
-
-python -c "from core.logger import log; log('%~1 completed')"
-
-exit /b
