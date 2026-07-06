@@ -1,27 +1,44 @@
 # 539 AI Ultimate Professional
 
-539 AI Ultimate is a local professional dashboard for 539 prediction workflows. V7 separates the web experience into a multi-page FastAPI application while keeping the existing Prediction, Learning, Decision, and Backtest engines intact.
+[![CI](https://github.com/your-org/539_AI_Ultimate/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/539_AI_Ultimate/actions/workflows/ci.yml)
 
-## V7 Architecture
+539 AI Ultimate Professional is a local-first FastAPI dashboard for 539 prediction workflows. V7 turns the project into a multi-page professional Web application while preserving the existing Prediction, Learning, Decision, Backtest, and Explainable AI engines.
 
-- `core/`: prediction scorer, learning, backtest, and explainable AI helpers.
-- `database/`: SQLite data store (`history.db`).
-- `web/`: FastAPI routes, Jinja2 templates, Bootstrap 5 UI, Chart.js views, TTL cache, logging, health, and performance APIs.
-- `reports/`: backtest CSV outputs.
-- `models/`: learning weights.
-- `tests/`: pytest smoke and contract tests.
+## Architecture
 
-## Web Pages
+```text
+539_AI_Ultimate
+├── app/                 Legacy app scripts and orchestration
+├── core/                Prediction, learning, backtest, scorer, explainer
+├── database/            SQLite runtime database
+├── docs/                Architecture, API, database, learning, explain, decision docs
+├── models/              Model weight files
+├── reports/             Generated backtest reports
+├── tests/               Pytest smoke and API contract tests
+└── web/                 FastAPI, routes, services, templates, static assets
+```
 
-- `/dashboard`: system dashboard, charts, health, and performance.
-- `/prediction`: latest recommendations, history, and Explain drawer.
-- `/decision`: decision score and reasons.
-- `/learning`: learning center and weight history.
-- `/backtest`: strategy backtest center.
-- `/data`: draw data center.
-- `/settings`: version, git, counts, and health details.
+Web runtime:
+
+- FastAPI for HTTP API and page routing.
+- Jinja2 for templates.
+- Bootstrap 5 for professional UI.
+- Chart.js for dashboard visualization.
+- SQLite for local historical data.
+- TTL cache and structured daily logs for performance and observability.
+
+## Screenshots
+
+Screenshots are not committed in this release candidate. Recommended captures:
+
+- `/dashboard`: health, performance, KPI cards, and trend charts.
+- `/prediction`: recommendation cards, history, and Explain drawer.
+- `/learning`: ROI, hit rate, and weight history.
+- `/backtest`: ROI trend, hit trend, distribution, and recent rows.
 
 ## API
+
+Core read APIs:
 
 - `GET /api/status`
 - `GET /api/health`
@@ -37,22 +54,25 @@
 - `GET /api/learning/latest`
 - `GET /api/learning/history`
 - `GET /api/learning/weights`
+
+Action APIs:
+
 - `POST /api/run-all`
 - `POST /api/update`
 - `POST /api/predict`
 - `POST /api/backtest`
 - `POST /api/dashboard`
 
-## Install
+See [docs/API.md](docs/API.md) for details.
 
-Use any available Python environment.
+## Install
 
 ```bash
 pip install -r requirements.txt
 pip install -r requirements-dev.txt
 ```
 
-## Quick Start
+## Run
 
 ```bash
 uvicorn web.app:app --host 127.0.0.1 --port 8000
@@ -64,17 +84,33 @@ Open:
 http://127.0.0.1:8000/dashboard
 ```
 
-## Tests
+Docker:
 
 ```bash
-pytest
+docker compose up --build
 ```
 
-The test suite covers API status, health, prediction format, decision, learning, backtest, explain API, and smoke checks.
+## Testing
 
-## Quality Layer
+```bash
+python -m compileall core web tests
+python -m pytest tests
+python -m ruff check .
+python -m black --check .
+```
 
-- `web/cache.py`: 60-second TTL cache for dashboard, decision, explain, backtest, and learning APIs.
-- `web/logger.py`: JSON daily logs with request id, duration, success/fail, and exception fields.
-- `GET /api/health`: reports Database, Prediction, Learning, Dashboard, Backtest, Explain, Cache, and Logger health.
-- `GET /api/performance`: reports average API time, cache hit/miss, memory, CPU, and recent API timings.
+The test suite is designed as smoke and contract coverage. It does not require external network calls. Local database/report dependent checks are skipped or relaxed when data is unavailable.
+
+## Documentation
+
+- [Architecture](docs/Architecture.md)
+- [API](docs/API.md)
+- [Database](docs/Database.md)
+- [Learning](docs/Learning.md)
+- [Explain](docs/Explain.md)
+- [Decision](docs/Decision.md)
+- [Release Checklist](docs/RELEASE_CHECKLIST.md)
+
+## License
+
+MIT. See [LICENSE](LICENSE).

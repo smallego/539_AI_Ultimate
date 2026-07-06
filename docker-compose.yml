@@ -1,0 +1,13 @@
+services:
+  web:
+    build: .
+    container_name: 539-ai-ultimate-web
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./database:/app/database
+      - ./models:/app/models
+      - ./reports:/app/reports
+      - ./logs:/app/logs
+    environment:
+      - PYTHONUNBUFFERED=1
