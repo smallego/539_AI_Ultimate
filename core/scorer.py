@@ -17,11 +17,17 @@ from config import (
     BALANCE_WEIGHT,
 )
 
-from engine import build_final_weights, get_all_draws, get_numbers
-from ai_scorer import ai_score
+from core.engine import build_final_weights, get_all_draws, get_numbers
+from core.ai_scorer import ai_score
 
+from core.learning import load_weights
 
-AI_WEIGHT = 0.25
+MODEL = load_weights()
+
+AI_WEIGHT = MODEL["AI_WEIGHT"]
+
+# 以下內容與原版相同
+
 
 
 def build_cooccurrence(draws):
@@ -93,9 +99,9 @@ def score_set(nums, weights, co_matrix):
     ai_score_normalized = ai_result["ai_score"] / 100
 
     final_score = (
-        weight_score * SCORER_WEIGHT +
-        co_score * COOCCURRENCE_WEIGHT +
-        bal_score * BALANCE_WEIGHT +
+        weight_score * MODEL["SCORER_WEIGHT"] +
+        co_score * MODEL["COOCCURRENCE_WEIGHT"] +
+        bal_score * MODEL["BALANCE_WEIGHT"] +
         ai_score_normalized * AI_WEIGHT
     )
 

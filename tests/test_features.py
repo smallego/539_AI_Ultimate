@@ -6,7 +6,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR / "core"))
 
-from features import analyze_set
+from core.features import analyze_set
 
 
 def test_analyze_set_basic():

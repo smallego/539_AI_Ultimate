@@ -1,0 +1,6 @@
+{
+    "SCORER_WEIGHT": 0.4,
+    "COOCCURRENCE_WEIGHT": 0.2,
+    "BALANCE_WEIGHT": 0.15,
+    "AI_WEIGHT": 0.25
+}

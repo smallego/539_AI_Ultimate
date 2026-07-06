@@ -4,7 +4,7 @@ import sys
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR / "core"))
 
-from ai_scorer import ai_score
+from core.ai_scorer import ai_score
 
 
 def test_ai_score_range():

@@ -14,29 +14,39 @@ from core.logger import log, log_error
 
 
 def run_pipeline():
-    try:
-        log("V4 pipeline started")
 
-        log("Step 1: API update")
-        update_from_api()
+    steps = [
+        ("API 更新", update_from_api),
+        ("AI 預測", run_scorer),
+        ("回測", run_backtest),
+        ("Dashboard", build_dashboard_v4),
+    ]
 
-        log("Step 2: AI scorer")
-        run_scorer()
+    for name, func in steps:
 
-        log("Step 3: Backtest")
-        run_backtest()
+        print("=" * 60)
+        print(f"開始：{name}")
 
-        log("Step 4: Dashboard V4")
-        build_dashboard_v4()
+        try:
 
-        log("V4 pipeline finished")
-        print("===================================")
-        print("V4 Pipeline 全部完成")
-        print("===================================")
+            func()
 
-    except Exception as e:
-        log_error("V4 pipeline failed", e)
-        raise
+            print(f"完成：{name}")
+
+        except Exception as e:
+
+            import traceback
+
+            print()
+            print(f"{name} 發生錯誤")
+            traceback.print_exc()
+
+            raise
+
+    print("=" * 60)
+    print("全部完成")
+
+   
 
 
 if __name__ == "__main__":

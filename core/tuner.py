@@ -11,7 +11,7 @@ import sys
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR))
 
-from ai_scorer import ai_score
+from core.ai_scorer import ai_score
 
 DB_PATH = BASE_DIR / "database" / "history.db"
 REPORT_PATH = BASE_DIR / "reports" / "tuning_result.csv"

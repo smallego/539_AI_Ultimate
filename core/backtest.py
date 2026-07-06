@@ -245,6 +245,11 @@ def run_backtest():
     roi = (total_prize - total_cost) / total_cost * 100
     avg_match = sum(max_match_list) / len(max_match_list)
 
+    from core.learning import learn
+    new_weights = learn(roi)
+
+    print("AI Learning 更新完成")
+    print(new_weights)
     print("===================================")
     print("539 AI Ultimate - Rolling Backtest")
     print(MODEL_VERSION)

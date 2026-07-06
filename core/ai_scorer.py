@@ -1,6 +1,6 @@
 # core/ai_scorer.py
 
-from features import analyze_set
+from core.features import analyze_set
 
 
 def score_sum(total):

@@ -4,7 +4,7 @@ import sys
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR / "core"))
 
-from engine import build_final_weights
+from core.engine import build_final_weights
 
 
 def test_engine_final_weights():

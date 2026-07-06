@@ -1,7 +1,10 @@
 from pathlib import Path
 import sys
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+if getattr(sys, "frozen", False):
+    BASE_DIR = Path(sys.executable).resolve().parent
+else:
+    BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
 from openpyxl import Workbook
@@ -12,7 +15,9 @@ from dashboard.dashboard_stats import analytics_tables
 from dashboard.dashboard_charts import add_bar_chart, add_line_chart
 from dashboard.dashboard_trend import trend_data
 
-OUTPUT_PATH = BASE_DIR / "dashboard" / "Dashboard_V4.xlsx"
+OUTPUT_DIR = BASE_DIR / "dashboard"
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+OUTPUT_PATH = OUTPUT_DIR / "Dashboard_V4.xlsx"
 
 
 def setup_title(ws, title):
