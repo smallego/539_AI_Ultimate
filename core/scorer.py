@@ -1,14 +1,17 @@
-# core/scorer.py
+﻿# core/scorer.py
 
 import random
+import sqlite3
 from itertools import combinations
 from pathlib import Path
 import sys
+from datetime import datetime
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR))
 
 from config import (
+    MODEL_VERSION,
     CANDIDATE_COUNT,
     SET_COUNT,
     MAX_OVERLAP,
@@ -25,9 +28,10 @@ from core.learning import load_weights
 MODEL = load_weights()
 
 AI_WEIGHT = MODEL["AI_WEIGHT"]
+DB_PATH = BASE_DIR / "database" / "history.db"
+LAST_CANDIDATE_COUNT = 0
 
-# 以下內容與原版相同
-
+# 隞乩??批捆?????
 
 
 def build_cooccurrence(draws):
@@ -143,7 +147,83 @@ def select_best_sets(scored_sets):
     return selected
 
 
-def main():
+def ensure_prediction_history_schema():
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS prediction_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        predict_date TEXT,
+        created_at TEXT,
+        model_version TEXT NOT NULL,
+        set_no INTEGER NOT NULL,
+        n1 INTEGER NOT NULL,
+        n2 INTEGER NOT NULL,
+        n3 INTEGER NOT NULL,
+        n4 INTEGER NOT NULL,
+        n5 INTEGER NOT NULL,
+        final_score REAL,
+        ai_score REAL
+    )
+    """)
+
+    cur.execute("PRAGMA table_info(prediction_history)")
+    columns = {row[1] for row in cur.fetchall()}
+
+    if "created_at" not in columns:
+        cur.execute("ALTER TABLE prediction_history ADD COLUMN created_at TEXT")
+    if "predict_date" not in columns:
+        cur.execute("ALTER TABLE prediction_history ADD COLUMN predict_date TEXT")
+    if "final_score" not in columns:
+        cur.execute("ALTER TABLE prediction_history ADD COLUMN final_score REAL")
+    if "ai_score" not in columns:
+        cur.execute("ALTER TABLE prediction_history ADD COLUMN ai_score REAL")
+
+    conn.commit()
+    conn.close()
+
+
+def save_prediction_history(predictions):
+    ensure_prediction_history_schema()
+
+    created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    predict_date = datetime.now().strftime("%Y-%m-%d")
+
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+
+    for item in predictions:
+        nums = sorted([int(n) for n in item["numbers"]])
+        cur.execute("""
+        INSERT INTO prediction_history
+        (
+            predict_date,
+            created_at,
+            model_version,
+            set_no,
+            n1, n2, n3, n4, n5,
+            final_score,
+            ai_score
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            predict_date,
+            created_at,
+            MODEL_VERSION,
+            item["set_no"],
+            nums[0], nums[1], nums[2], nums[3], nums[4],
+            item["final_score"],
+            item["ai_score"],
+        ))
+
+    conn.commit()
+    conn.close()
+
+
+def run_prediction(save=True):
+    global LAST_CANDIDATE_COUNT
+
     engine_result = build_final_weights()
     draws = get_all_draws()
 
@@ -151,6 +231,7 @@ def main():
     co_matrix = build_cooccurrence(draws)
 
     candidates = generate_candidate_sets(weights)
+    LAST_CANDIDATE_COUNT = len(candidates)
 
     scored = []
     for nums in candidates:
@@ -161,25 +242,41 @@ def main():
 
     best_sets = select_best_sets(scored)
 
+    predictions = []
+    for i, nums in enumerate(best_sets, start=1):
+        score = score_set(nums, weights, co_matrix)
+        ai = ai_score(nums)
+        predictions.append({
+            "set_no": i,
+            "numbers": nums,
+            "final_score": round(score, 4),
+            "ai_score": float(ai["ai_score"]),
+        })
+
+    if save:
+        save_prediction_history(predictions)
+
+    return predictions
+
+
+def main():
+    predictions = run_prediction(save=True)
+
     print("===================================")
     print("539 AI Ultimate - Candidate Scorer")
     print("B-Model V2.0 + AI Score")
     print("===================================")
-    print(f"候選組合數：{len(candidates)}")
-    print("最佳 5 組：")
+    print(f"Candidates: {LAST_CANDIDATE_COUNT}")
+    print("Top 5 Sets")
     print("===================================")
 
-    for i, nums in enumerate(best_sets, start=1):
-        score = score_set(nums, weights, co_matrix)
-        ai = ai_score(nums)
-
+    for item in predictions:
         print(
-            f"第 {i} 組：{' '.join(f'{n:02d}' for n in nums)}  "
-            f"Final Score：{score:.4f}  AI Score：{ai['ai_score']}"
+            f"Set {item['set_no']} {' '.join(f'{n:02d}' for n in item['numbers'])}  "
+            f"Final Score: {item['final_score']:.4f}  AI Score: {item['ai_score']}"
         )
 
     print("===================================")
-
 
 if __name__ == "__main__":
     main()
