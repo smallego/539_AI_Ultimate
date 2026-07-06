@@ -153,7 +153,7 @@ def index(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="index.html",
-        context={"title": "539 AI Ultimate V6"},
+        context={"title": "539 AI Ultimate Professional"},
     )
 
 
