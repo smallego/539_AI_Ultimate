@@ -107,6 +107,93 @@ h1 {
   font-size: clamp(1.35rem, 2.5vw, 2rem);
 }
 
+.health-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.health-item {
+  padding: 14px;
+  border: 1px solid #e7eef6;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.health-item span,
+.health-item strong {
+  display: block;
+}
+
+.health-item span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin-bottom: 6px;
+}
+
+.health-item strong {
+  font-size: 0.94rem;
+}
+
+.health-item.ok {
+  border-color: rgba(25, 135, 84, 0.28);
+  background: rgba(25, 135, 84, 0.06);
+}
+
+.health-item.warn {
+  border-color: rgba(220, 53, 69, 0.25);
+  background: rgba(220, 53, 69, 0.05);
+}
+
+.decision-card {
+  border-color: rgba(13, 110, 253, 0.18);
+}
+
+.decision-score {
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  border: 1px solid #e7eef6;
+  border-radius: 8px;
+  background: #f8fafc;
+  text-align: center;
+}
+
+.decision-stars {
+  color: #f5b301;
+  font-size: 1.3rem;
+  letter-spacing: 0.08em;
+}
+
+.decision-score strong {
+  font-size: 2.6rem;
+  line-height: 1.1;
+}
+
+.decision-score span,
+.decision-reason span {
+  color: var(--muted);
+}
+
+.decision-reasons {
+  display: grid;
+  gap: 8px;
+}
+
+.decision-reason {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid #e7eef6;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.decision-reason strong {
+  font-size: 0.92rem;
+}
+
 .mini-metric {
   padding: 14px;
   border: 1px solid #e7eef6;
@@ -267,6 +354,37 @@ pre {
   white-space: pre-wrap;
 }
 
+.version-panel {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 5;
+  display: grid;
+  gap: 6px;
+  min-width: 220px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 10px 24px rgba(19, 34, 56, 0.12);
+}
+
+.version-panel div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.version-panel span {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.version-panel strong {
+  font-size: 0.76rem;
+  text-align: right;
+}
+
 canvas {
   width: 100%;
   max-height: 360px;
@@ -284,5 +402,10 @@ canvas {
   .topbar {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .version-panel {
+    position: static;
+    margin: 0 24px 24px;
   }
 }

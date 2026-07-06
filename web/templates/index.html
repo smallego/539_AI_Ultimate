@@ -14,7 +14,7 @@
         <span class="brand-mark">539</span>
         <div>
           <strong>AI Ultimate</strong>
-          <small>Professional V6.3</small>
+          <small>Professional V6.4.1</small>
         </div>
       </div>
 
@@ -63,6 +63,70 @@
           <div class="kpi-card">
             <span>Dashboard File</span>
             <strong id="dashboard-status">-</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel mb-4">
+        <div class="panel-title">
+          <h2>System Health</h2>
+          <span id="system-health-status" class="badge text-bg-light">Checking</span>
+        </div>
+        <div class="health-grid">
+          <div class="health-item" id="health-database">
+            <span>Database</span>
+            <strong>-</strong>
+          </div>
+          <div class="health-item" id="health-api">
+            <span>API</span>
+            <strong>-</strong>
+          </div>
+          <div class="health-item" id="health-learning">
+            <span>Learning</span>
+            <strong>-</strong>
+          </div>
+          <div class="health-item" id="health-dashboard">
+            <span>Dashboard</span>
+            <strong>-</strong>
+          </div>
+          <div class="health-item" id="health-prediction">
+            <span>Prediction</span>
+            <strong>-</strong>
+          </div>
+          <div class="health-item" id="health-runAll">
+            <span>RunAll</span>
+            <strong>-</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel decision-card mb-4">
+        <div class="panel-title">
+          <h2>Decision Center</h2>
+          <span id="decision-recommendation" class="badge text-bg-primary">Loading</span>
+        </div>
+        <div class="row g-4 align-items-center">
+          <div class="col-12 col-xl-3">
+            <div class="decision-score">
+              <div id="decision-stars" class="decision-stars">☆☆☆☆☆</div>
+              <strong id="decision-score">0</strong>
+              <span>Decision Score</span>
+            </div>
+          </div>
+          <div class="col-6 col-xl-2">
+            <div class="mini-metric">
+              <span>Confidence</span>
+              <strong id="decision-confidence">-</strong>
+            </div>
+          </div>
+          <div class="col-6 col-xl-2">
+            <div class="mini-metric">
+              <span>Risk</span>
+              <strong id="decision-risk">-</strong>
+            </div>
+          </div>
+          <div class="col-12 col-xl-5">
+            <div id="decision-reasons" class="decision-reasons"></div>
           </div>
         </div>
       </section>
@@ -239,6 +303,13 @@
         </div>
       </section>
     </main>
+
+    <aside class="version-panel">
+      <div><span>Version</span><strong id="version-value">-</strong></div>
+      <div><span>Git Branch</span><strong id="git-branch">-</strong></div>
+      <div><span>Git Commit</span><strong id="git-commit">-</strong></div>
+      <div><span>Build Time</span><strong id="build-time">-</strong></div>
+    </aside>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>

@@ -1,12 +1,23 @@
 import sqlite3
 import json
+import subprocess
 from collections import Counter
-from datetime import datetime
-from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-DB_PATH = BASE_DIR / "database" / "history.db"
-MODEL_FILE = BASE_DIR / "models" / "weights.json"
+from web.config import (
+    API_SCRIPTS,
+    BACKTEST_REPORT,
+    BASE_DIR,
+    BUILD_TIME,
+    DASHBOARD_FILE,
+    DATABASE_PATH,
+    MODEL_FILE,
+    app_version,
+)
+
+try:
+    from config import MODEL_VERSION
+except Exception:
+    MODEL_VERSION = "unknown"
 
 
 def number_fields():
@@ -18,13 +29,13 @@ def row_numbers(row):
 
 
 def get_connection():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DATABASE_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
 
 def ensure_prediction_history_schema():
-    if not DB_PATH.exists():
+    if not DATABASE_PATH.exists():
         return
 
     conn = get_connection()
@@ -63,7 +74,7 @@ def ensure_prediction_history_schema():
 
 
 def ensure_learning_history_schema():
-    if not DB_PATH.exists():
+    if not DATABASE_PATH.exists():
         return
 
     conn = get_connection()
@@ -149,7 +160,7 @@ def format_learning(row):
 
 
 def latest_learning():
-    if not DB_PATH.exists():
+    if not DATABASE_PATH.exists():
         return {}
 
     ensure_learning_history_schema()
@@ -167,7 +178,7 @@ def latest_learning():
 
 
 def learning_history(limit=50):
-    if not DB_PATH.exists():
+    if not DATABASE_PATH.exists():
         return []
 
     ensure_learning_history_schema()
@@ -193,7 +204,7 @@ def learning_weights(limit=20):
 
 
 def latest_predictions():
-    if not DB_PATH.exists():
+    if not DATABASE_PATH.exists():
         return []
 
     ensure_prediction_history_schema()
@@ -233,7 +244,7 @@ def latest_predictions():
 
 
 def prediction_history(limit=50):
-    if not DB_PATH.exists():
+    if not DATABASE_PATH.exists():
         return []
 
     ensure_prediction_history_schema()
@@ -265,10 +276,10 @@ def empty_dashboard_data():
 
 
 def get_recent_draw_rows(limit=100):
-    if not DB_PATH.exists():
+    if not DATABASE_PATH.exists():
         return [], 0
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DATABASE_PATH)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
@@ -346,4 +357,242 @@ def dashboard_data(limit=100):
         "latestDraw": recent_draws[-1],
         "databaseCount": database_count,
         "recentDraws": recent_draws,
+    }
+
+
+def clamp(value, low=0, high=100):
+    return max(low, min(high, value))
+
+
+def average(values, default=0):
+    clean = [float(value) for value in values if value is not None]
+    if not clean:
+        return default
+    return sum(clean) / len(clean)
+
+
+def recommendation(score):
+    if score >= 82:
+        return "Strong Buy"
+    if score >= 68:
+        return "Buy"
+    if score >= 48:
+        return "Neutral"
+    return "Avoid"
+
+
+def confidence_label(score):
+    if score >= 80:
+        return "High"
+    if score >= 60:
+        return "Medium"
+    return "Low"
+
+
+def risk_label(score, cold_overlap, trend_score):
+    if score < 50 or cold_overlap >= 4 or trend_score < 50:
+        return "High"
+    if score < 70 or cold_overlap >= 2:
+        return "Medium"
+    return "Low"
+
+
+def star_rating(score):
+    filled = int(round(score / 20))
+    filled = max(0, min(5, filled))
+    return "★" * filled + "☆" * (5 - filled)
+
+
+def decision_center():
+    predictions = latest_predictions()
+    learning = latest_learning()
+    data = dashboard_data()
+
+    predicted_numbers = []
+    for item in predictions:
+        predicted_numbers.extend(item["numbers"])
+
+    hot_numbers = [item["number"] for item in data["hot"][:10]]
+    cold_numbers = [item["number"] for item in data["cold"][:10]]
+    hot_overlap = sorted(set(predicted_numbers) & set(hot_numbers))
+    cold_overlap = sorted(set(predicted_numbers) & set(cold_numbers))
+
+    ai_component = average([item.get("ai_score") for item in predictions], default=50)
+    final_component = clamp(average([item.get("final_score") for item in predictions], default=0.5) * 100)
+
+    roi = learning.get("roi")
+    hit2 = learning.get("hit2")
+    hit3 = learning.get("hit3")
+    hit4 = learning.get("hit4")
+
+    roi_component = clamp(((float(roi) if roi is not None else -70) + 100) * 1.0)
+    hit_component = clamp(
+        average([
+            (hit2 or 0),
+            (hit3 or 0) * 1.7,
+            (hit4 or 0) * 3.0,
+        ], default=35)
+    )
+    learning_component = average([roi_component, hit_component], default=50)
+
+    latest_draw = data.get("latestDraw") or {}
+    latest_sum = latest_draw.get("sum")
+    latest_span = latest_draw.get("span")
+    sum_normal = latest_sum is not None and 80 <= latest_sum <= 130
+    span_normal = latest_span is not None and 20 <= latest_span <= 36
+    trend_component = average([
+        100 if sum_normal else 55,
+        100 if span_normal else 55,
+    ], default=60)
+
+    hot_cold_component = clamp(55 + len(hot_overlap) * 6 - len(cold_overlap) * 5)
+
+    score = round(
+        ai_component * 0.22
+        + final_component * 0.18
+        + learning_component * 0.20
+        + roi_component * 0.12
+        + hit_component * 0.10
+        + hot_cold_component * 0.10
+        + trend_component * 0.08,
+        2,
+    )
+
+    reasons = {
+        "Hot Number": [f"{number:02d}" for number in hot_overlap[:5]],
+        "Cold Number": [f"{number:02d}" for number in cold_overlap[:5]],
+        "Trend": [
+            "和值正常" if sum_normal else "和值偏離",
+            "跨度正常" if span_normal else "跨度偏離",
+        ],
+        "Learning": [
+            f"最近 ROI {roi:.2f}%" if roi is not None else "尚無 ROI",
+            f"Hit2 {hit2:.2f}%" if hit2 is not None else "尚無 Hit Rate",
+        ],
+        "AI": [round(ai_component, 2)],
+        "Final": [round(final_component, 2)],
+    }
+
+    return {
+        "decisionScore": score,
+        "stars": star_rating(score),
+        "confidence": confidence_label(score),
+        "risk": risk_label(score, len(cold_overlap), trend_component),
+        "recommendation": recommendation(score),
+        "components": {
+            "aiScore": round(ai_component, 2),
+            "finalScore": round(final_component, 2),
+            "learning": round(learning_component, 2),
+            "recentRoi": round(roi_component, 2),
+            "recentHitRate": round(hit_component, 2),
+            "hotCold": round(hot_cold_component, 2),
+            "trend": round(trend_component, 2),
+        },
+        "reasons": reasons,
+    }
+
+
+def table_count(table_name):
+    if not DATABASE_PATH.exists():
+        return 0
+
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(f"SELECT COUNT(*) AS count FROM {table_name}")
+        count = cur.fetchone()["count"]
+    except sqlite3.Error:
+        count = 0
+    conn.close()
+    return count
+
+
+def file_mtime(path):
+    if not path.exists():
+        return None
+    return path.stat().st_mtime
+
+
+def file_mtime_text(path):
+    timestamp = file_mtime(path)
+    if timestamp is None:
+        return None
+    from datetime import datetime
+    return datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
+
+
+def git_value(args):
+    try:
+        result = subprocess.run(
+            ["git", *args],
+            cwd=BASE_DIR,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=5,
+        )
+        if result.returncode == 0:
+            return result.stdout.strip()
+    except Exception:
+        return "unknown"
+    return "unknown"
+
+
+def git_info():
+    return {
+        "branch": git_value(["rev-parse", "--abbrev-ref", "HEAD"]),
+        "commit": git_value(["rev-parse", "--short", "HEAD"]),
+    }
+
+
+def system_health():
+    database_count = table_count("draw_history")
+    prediction_count = table_count("prediction_history")
+    learning_count = table_count("learning_history")
+
+    return {
+        "database": {
+            "ok": DATABASE_PATH.exists() and database_count > 0,
+            "label": f"{database_count} draws" if DATABASE_PATH.exists() else "missing",
+        },
+        "api": {
+            "ok": True,
+            "label": "online",
+        },
+        "learning": {
+            "ok": learning_count > 0,
+            "label": f"{learning_count} runs",
+        },
+        "dashboard": {
+            "ok": DASHBOARD_FILE.exists(),
+            "label": file_mtime_text(DASHBOARD_FILE) or "missing",
+        },
+        "prediction": {
+            "ok": prediction_count > 0,
+            "label": f"{prediction_count} rows",
+        },
+        "runAll": {
+            "ok": (BASE_DIR / API_SCRIPTS["run_all"]).exists(),
+            "label": "ready" if (BASE_DIR / API_SCRIPTS["run_all"]).exists() else "missing",
+        },
+    }
+
+
+def system_info():
+    git = git_info()
+    return {
+        "version": app_version(),
+        "git": git,
+        "gitBranch": git["branch"],
+        "gitCommit": git["commit"],
+        "buildTime": BUILD_TIME,
+        "databaseCount": table_count("draw_history"),
+        "predictionCount": table_count("prediction_history"),
+        "learningCount": table_count("learning_history"),
+        "dashboardTime": file_mtime_text(DASHBOARD_FILE),
+        "modelVersion": MODEL_VERSION,
+        "modelWeightsExists": MODEL_FILE.exists(),
+        "backtestReportExists": BACKTEST_REPORT.exists(),
+        "health": system_health(),
     }

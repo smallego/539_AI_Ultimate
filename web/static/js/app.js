@@ -14,6 +14,13 @@ function setRunState(text, tone) {
   state.innerText = text;
 }
 
+function setHealth(id, item) {
+  const box = byId(id);
+  box.classList.toggle("ok", Boolean(item && item.ok));
+  box.classList.toggle("warn", !Boolean(item && item.ok));
+  box.querySelector("strong").innerText = item ? item.label : "-";
+}
+
 function formatNumbers(numbers) {
   if (!numbers || numbers.length === 0) return "-";
   return numbers.map((number) => String(number).padStart(2, "0")).join(" ");
@@ -226,6 +233,55 @@ async function loadStatus() {
   setText("db-status", data.database_exists ? "Database Ready" : "No Database");
 }
 
+async function loadSystemInfo() {
+  const response = await fetch("/api/system");
+  const data = await response.json();
+  const health = data.health || {};
+
+  setHealth("health-database", health.database);
+  setHealth("health-api", health.api);
+  setHealth("health-learning", health.learning);
+  setHealth("health-dashboard", health.dashboard);
+  setHealth("health-prediction", health.prediction);
+  setHealth("health-runAll", health.runAll);
+
+  const allOk = Object.values(health).every((item) => item && item.ok);
+  setText("system-health-status", allOk ? "Healthy" : "Needs Attention");
+
+  setText("version-value", data.version);
+  setText("git-branch", data.gitBranch);
+  setText("git-commit", data.gitCommit);
+  setText("build-time", data.buildTime);
+}
+
+function recommendationTone(recommendation) {
+  if (recommendation === "Strong Buy") return "success";
+  if (recommendation === "Buy") return "primary";
+  if (recommendation === "Neutral") return "secondary";
+  return "danger";
+}
+
+async function loadDecisionCenter() {
+  const response = await fetch("/api/decision");
+  const data = await response.json();
+  const badge = byId("decision-recommendation");
+
+  setText("decision-stars", data.stars);
+  setText("decision-score", data.decisionScore);
+  setText("decision-confidence", data.confidence);
+  setText("decision-risk", data.risk);
+  badge.innerText = data.recommendation;
+  badge.className = `badge text-bg-${recommendationTone(data.recommendation)}`;
+
+  const reasons = data.reasons || {};
+  byId("decision-reasons").innerHTML = Object.entries(reasons).map(([title, values]) => `
+    <div class="decision-reason">
+      <span>${title}</span>
+      <strong>${Array.isArray(values) && values.length ? values.join(" / ") : "-"}</strong>
+    </div>
+  `).join("");
+}
+
 async function loadPredictions() {
   const [latestResponse, historyResponse] = await Promise.all([
     fetch("/api/predictions/latest"),
@@ -362,6 +418,8 @@ async function loadLearningCenter() {
 }
 
 async function refreshDashboard() {
+  await loadSystemInfo();
+  await loadDecisionCenter();
   await loadStatus();
   await loadPredictions();
   await loadDashboardData();
