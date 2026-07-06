@@ -18,6 +18,7 @@ from web.config import (
 )
 from web.logger import log_event
 from web.services import (
+    backtest_center,
     dashboard_data,
     decision_center,
     ensure_prediction_history_schema,
@@ -205,6 +206,12 @@ def api_dashboard_data():
 def api_decision():
     log_event("api.decision", "SUCCESS")
     return decision_center()
+
+
+@router.get("/api/backtest-center")
+def api_backtest_center():
+    log_event("api.backtest_center", "SUCCESS")
+    return backtest_center()
 
 
 @router.get("/api/predictions/latest")

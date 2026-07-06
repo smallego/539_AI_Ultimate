@@ -66,6 +66,32 @@ function renderBarChart(id, label, rows, color) {
   });
 }
 
+function renderSimpleBarChart(id, label, labels, values, color) {
+  destroyChart(id);
+  charts[id] = new Chart(byId(id), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label,
+          data: values,
+          borderColor: color,
+          backgroundColor: color.replace("1)", "0.72)"),
+          borderWidth: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { precision: 0 } },
+      },
+    },
+  });
+}
+
 function renderLineChart(id, label, rows, color) {
   destroyChart(id);
   charts[id] = new Chart(byId(id), {
@@ -417,6 +443,87 @@ async function loadLearningCenter() {
   );
 }
 
+function renderBacktestRows(rows) {
+  const body = byId("bt-recent-rows");
+  body.innerHTML = "";
+
+  if (!rows || rows.length === 0) {
+    body.innerHTML = '<tr><td colspan="6" class="text-muted">No backtest report yet.</td></tr>';
+    return;
+  }
+
+  rows.forEach((row) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${row.draw_date || "-"}</td>
+      <td>${row.draw_no || "-"}</td>
+      <td class="text-end">${row.best_match}</td>
+      <td class="text-end">${formatPercent(row.period_roi)}</td>
+      <td class="text-end">${formatPercent(row.cumulative_roi)}</td>
+      <td class="history-numbers">${row.winning_numbers || "-"}</td>
+    `;
+    body.appendChild(tr);
+  });
+}
+
+async function loadBacktestCenter() {
+  const response = await fetch("/api/backtest-center");
+  const data = await response.json();
+  const summary = data.summary || {};
+  const hitTrend = data.hitTrend || {};
+  const distribution = data.bestMatchDistribution || [];
+
+  setText("bt-total-periods", summary.total_periods);
+  setText("bt-cumulative-roi", formatPercent(summary.cumulative_roi));
+  setText("bt-hit2", formatPercent(summary.hit2_rate));
+  setText("bt-hit3", formatPercent(summary.hit3_rate));
+  setText("bt-avg-match", formatScore(summary.avg_best_match));
+  setText("bt-losing-streak", summary.max_losing_streak);
+  setText("backtest-center-status", `${summary.total_periods || 0} periods`);
+
+  renderLineChart(
+    "bt-roi-chart",
+    "Cumulative ROI",
+    (data.roiTrend || []).map((row) => ({ label: row.label, value: row.value })),
+    "rgba(13, 110, 253, 1)"
+  );
+
+  const labels = (hitTrend.hit2 || []).map((row) => row.label);
+  renderMultiLineChart("bt-hit-chart", labels, [
+    {
+      label: "Hit 2+",
+      data: (hitTrend.hit2 || []).map((row) => row.value),
+      borderColor: "rgba(25, 135, 84, 1)",
+      backgroundColor: "rgba(25, 135, 84, 0.08)",
+      tension: 0.25,
+    },
+    {
+      label: "Hit 3+",
+      data: (hitTrend.hit3 || []).map((row) => row.value),
+      borderColor: "rgba(255, 193, 7, 1)",
+      backgroundColor: "rgba(255, 193, 7, 0.08)",
+      tension: 0.25,
+    },
+    {
+      label: "Hit 4+",
+      data: (hitTrend.hit4 || []).map((row) => row.value),
+      borderColor: "rgba(220, 53, 69, 1)",
+      backgroundColor: "rgba(220, 53, 69, 0.08)",
+      tension: 0.25,
+    },
+  ]);
+
+  renderSimpleBarChart(
+    "bt-match-chart",
+    "Best Match",
+    distribution.map((row) => String(row.match)),
+    distribution.map((row) => row.count),
+    "rgba(111, 66, 193, 1)"
+  );
+
+  renderBacktestRows(data.recentRows || []);
+}
+
 async function refreshDashboard() {
   await loadSystemInfo();
   await loadDecisionCenter();
@@ -424,6 +531,7 @@ async function refreshDashboard() {
   await loadPredictions();
   await loadDashboardData();
   await loadLearningCenter();
+  await loadBacktestCenter();
 }
 
 document.querySelectorAll("[data-action]").forEach((button) => {

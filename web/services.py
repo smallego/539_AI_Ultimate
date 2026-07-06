@@ -1,6 +1,7 @@
-import sqlite3
+﻿import sqlite3
 import json
 import subprocess
+import csv
 from collections import Counter
 
 from web.config import (
@@ -400,7 +401,7 @@ def risk_label(score, cold_overlap, trend_score):
 def star_rating(score):
     filled = int(round(score / 20))
     filled = max(0, min(5, filled))
-    return "★" * filled + "☆" * (5 - filled)
+    return "*" * filled + "-" * (5 - filled)
 
 
 def decision_center():
@@ -462,12 +463,12 @@ def decision_center():
         "Hot Number": [f"{number:02d}" for number in hot_overlap[:5]],
         "Cold Number": [f"{number:02d}" for number in cold_overlap[:5]],
         "Trend": [
-            "和值正常" if sum_normal else "和值偏離",
-            "跨度正常" if span_normal else "跨度偏離",
+            "Sum normal" if sum_normal else "Sum outside range",
+            "Span normal" if span_normal else "Span outside range",
         ],
         "Learning": [
-            f"最近 ROI {roi:.2f}%" if roi is not None else "尚無 ROI",
-            f"Hit2 {hit2:.2f}%" if hit2 is not None else "尚無 Hit Rate",
+            f"Recent ROI {roi:.2f}%" if roi is not None else "No ROI yet",
+            f"Hit2 {hit2:.2f}%" if hit2 is not None else "No hit rate yet",
         ],
         "AI": [round(ai_component, 2)],
         "Final": [round(final_component, 2)],
@@ -489,6 +490,135 @@ def decision_center():
             "trend": round(trend_component, 2),
         },
         "reasons": reasons,
+    }
+
+
+def parse_float(value, default=0.0):
+    try:
+        if value in (None, ""):
+            return default
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def parse_int(value, default=0):
+    return int(parse_float(value, default))
+
+
+def empty_backtest_center():
+    return {
+        "summary": {
+            "total_periods": 0,
+            "cumulative_roi": 0,
+            "hit2_rate": 0,
+            "hit3_rate": 0,
+            "hit4_rate": 0,
+            "hit5_rate": 0,
+            "avg_best_match": 0,
+            "max_losing_streak": 0,
+        },
+        "roiTrend": [],
+        "hitTrend": [],
+        "bestMatchDistribution": [],
+        "recentRows": [],
+    }
+
+
+def read_backtest_csv():
+    if not BACKTEST_REPORT.exists():
+        return []
+
+    with BACKTEST_REPORT.open("r", encoding="utf-8-sig", newline="") as file:
+        return list(csv.DictReader(file))
+
+
+def format_backtest_row(row):
+    best_match = parse_int(row.get("best_match"))
+    period_prize = parse_float(row.get("period_prize"))
+    return {
+        "model_version": row.get("model_version", ""),
+        "draw_no": row.get("draw_no", ""),
+        "draw_date": row.get("draw_date", ""),
+        "winning_numbers": row.get("winning_numbers", ""),
+        "prediction_sets": row.get("prediction_sets", ""),
+        "best_match": best_match,
+        "period_roi": parse_float(row.get("period_roi")),
+        "cumulative_roi": parse_float(row.get("cumulative_roi")),
+        "period_cost": parse_float(row.get("period_cost")),
+        "period_prize": period_prize,
+        "hit2": 1 if best_match >= 2 else 0,
+        "hit3": 1 if best_match >= 3 else 0,
+        "hit4": 1 if best_match >= 4 else 0,
+        "hit5": 1 if best_match >= 5 else 0,
+    }
+
+
+def max_losing_streak(rows):
+    current = 0
+    maximum = 0
+    for row in rows:
+        if row["period_prize"] <= 0:
+            current += 1
+            maximum = max(maximum, current)
+        else:
+            current = 0
+    return maximum
+
+
+def rolling_hit_rate(rows, key, window=20):
+    trend = []
+    for index, row in enumerate(rows):
+        start = max(0, index - window + 1)
+        sample = rows[start:index + 1]
+        rate = sum(item[key] for item in sample) / len(sample) * 100 if sample else 0
+        trend.append({
+            "label": row["draw_date"] or row["draw_no"],
+            "value": round(rate, 2),
+        })
+    return trend
+
+
+def backtest_center():
+    raw_rows = read_backtest_csv()
+    if not raw_rows:
+        return empty_backtest_center()
+
+    rows = [format_backtest_row(row) for row in raw_rows]
+    total = len(rows)
+    distribution = Counter(row["best_match"] for row in rows)
+
+    summary = {
+        "total_periods": total,
+        "cumulative_roi": round(rows[-1]["cumulative_roi"], 2),
+        "hit2_rate": round(sum(row["hit2"] for row in rows) / total * 100, 2),
+        "hit3_rate": round(sum(row["hit3"] for row in rows) / total * 100, 2),
+        "hit4_rate": round(sum(row["hit4"] for row in rows) / total * 100, 2),
+        "hit5_rate": round(sum(row["hit5"] for row in rows) / total * 100, 4),
+        "avg_best_match": round(sum(row["best_match"] for row in rows) / total, 2),
+        "max_losing_streak": max_losing_streak(rows),
+    }
+
+    return {
+        "summary": summary,
+        "roiTrend": [
+            {
+                "label": row["draw_date"] or row["draw_no"],
+                "value": row["cumulative_roi"],
+                "period_roi": row["period_roi"],
+            }
+            for row in rows
+        ],
+        "hitTrend": {
+            "hit2": rolling_hit_rate(rows, "hit2"),
+            "hit3": rolling_hit_rate(rows, "hit3"),
+            "hit4": rolling_hit_rate(rows, "hit4"),
+        },
+        "bestMatchDistribution": [
+            {"match": match, "count": distribution.get(match, 0)}
+            for match in range(0, 6)
+        ],
+        "recentRows": list(reversed(rows[-50:])),
     }
 
 

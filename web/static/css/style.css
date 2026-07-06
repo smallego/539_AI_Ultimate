@@ -314,12 +314,14 @@ h1 {
   margin-top: 6px;
 }
 
-.history-table-wrap {
+.history-table-wrap,
+.backtest-table-wrap {
   max-height: 360px;
   overflow: auto;
 }
 
-.history-table-wrap thead th {
+.history-table-wrap thead th,
+.backtest-table-wrap thead th {
   position: sticky;
   top: 0;
   z-index: 1;
