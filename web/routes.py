@@ -4,7 +4,7 @@ import subprocess
 import sys
 
 from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from web.config import (
@@ -16,22 +16,53 @@ from web.config import (
     MODEL_FILE,
     WEB_DIR,
 )
+from web.cache import cached, clear_cache
 from web.logger import log_event
 from web.services import (
     backtest_center,
     dashboard_data,
     decision_center,
     ensure_prediction_history_schema,
+    explain_latest_predictions,
+    explain_prediction_by_id,
+    health_check,
     latest_learning,
     latest_predictions,
     learning_history,
     learning_weights,
     prediction_history,
+    system_performance,
     system_info,
 )
 
 router = APIRouter()
 templates = Jinja2Templates(directory=str(WEB_DIR / "templates"))
+
+
+PAGE_META = {
+    "dashboard": ("Dashboard", "/dashboard"),
+    "prediction": ("Prediction", "/prediction"),
+    "decision": ("Decision", "/decision"),
+    "learning": ("Learning", "/learning"),
+    "backtest": ("Backtest", "/backtest"),
+    "data": ("Data Center", "/data"),
+    "settings": ("Settings", "/settings"),
+}
+
+
+def render_page(request, template_name, page_key):
+    page_title, _ = PAGE_META[page_key]
+    return templates.TemplateResponse(
+        request=request,
+        name=template_name,
+        context={
+            "title": "539 AI Ultimate Professional",
+            "page_title": page_title,
+            "active_page": page_key,
+            "breadcrumb": ["Home", page_title],
+            "pages": PAGE_META,
+        },
+    )
 
 
 def run_script(action):
@@ -52,6 +83,8 @@ def run_script(action):
         stdout_tail=process.stdout[-1000:],
         stderr_tail=process.stderr[-1000:],
     )
+    if process.returncode == 0:
+        clear_cache()
     return {
         "ok": process.returncode == 0,
         "returncode": process.returncode,
@@ -150,11 +183,49 @@ def backtest_status():
 @router.get("/")
 def index(request: Request):
     log_event("page.index", "SUCCESS")
-    return templates.TemplateResponse(
-        request=request,
-        name="index.html",
-        context={"title": "539 AI Ultimate Professional"},
-    )
+    return RedirectResponse(url="/dashboard")
+
+
+@router.get("/dashboard")
+def dashboard_page(request: Request):
+    log_event("page.dashboard", "SUCCESS")
+    return render_page(request, "pages/dashboard.html", "dashboard")
+
+
+@router.get("/prediction")
+def prediction_page(request: Request):
+    log_event("page.prediction", "SUCCESS")
+    return render_page(request, "pages/prediction.html", "prediction")
+
+
+@router.get("/decision")
+def decision_page(request: Request):
+    log_event("page.decision", "SUCCESS")
+    return render_page(request, "pages/decision.html", "decision")
+
+
+@router.get("/learning")
+def learning_page(request: Request):
+    log_event("page.learning", "SUCCESS")
+    return render_page(request, "pages/learning.html", "learning")
+
+
+@router.get("/backtest")
+def backtest_page(request: Request):
+    log_event("page.backtest", "SUCCESS")
+    return render_page(request, "pages/backtest.html", "backtest")
+
+
+@router.get("/data")
+def data_page(request: Request):
+    log_event("page.data", "SUCCESS")
+    return render_page(request, "pages/data.html", "data")
+
+
+@router.get("/settings")
+def settings_page(request: Request):
+    log_event("page.settings", "SUCCESS")
+    return render_page(request, "pages/settings.html", "settings")
 
 
 @router.post("/api/run-all")
@@ -185,7 +256,7 @@ def api_dashboard():
 @router.get("/api/status")
 def api_status():
     log_event("api.status", "SUCCESS")
-    status = database_counts()
+    status = cached("status", database_counts)
     status.update(
         {
             "dashboard_exists": DASHBOARD_FILE.exists(),
@@ -199,55 +270,82 @@ def api_status():
 @router.get("/api/dashboard-data")
 def api_dashboard_data():
     log_event("api.dashboard_data", "SUCCESS")
-    return dashboard_data()
+    return cached("dashboard_data", dashboard_data)
 
 
 @router.get("/api/decision")
 def api_decision():
     log_event("api.decision", "SUCCESS")
-    return decision_center()
+    return cached("decision", decision_center)
 
 
 @router.get("/api/backtest-center")
 def api_backtest_center():
     log_event("api.backtest_center", "SUCCESS")
-    return backtest_center()
+    return cached("backtest_center", backtest_center)
 
 
 @router.get("/api/predictions/latest")
 def api_predictions_latest():
     log_event("api.predictions.latest", "SUCCESS")
-    return latest_predictions()
+    return cached("predictions_latest", latest_predictions)
 
 
 @router.get("/api/predictions/history")
 def api_predictions_history():
     log_event("api.predictions.history", "SUCCESS")
-    return prediction_history(limit=50)
+    return cached("predictions_history_50", lambda: prediction_history(limit=50))
+
+
+@router.get("/api/explain/latest")
+def api_explain_latest():
+    log_event("api.explain.latest", "SUCCESS")
+    return cached("explain_latest", explain_latest_predictions)
+
+
+@router.get("/api/explain/{prediction_id}")
+def api_explain_prediction(prediction_id: int):
+    log_event("api.explain.prediction", "SUCCESS", prediction_id=prediction_id)
+    report = cached(f"explain_{prediction_id}", lambda: explain_prediction_by_id(prediction_id))
+    if report is None:
+        return JSONResponse({"error": "Prediction not found"}, status_code=404)
+    return report
 
 
 @router.get("/api/learning/latest")
 def api_learning_latest():
     log_event("api.learning.latest", "SUCCESS")
-    return latest_learning()
+    return cached("learning_latest", latest_learning)
 
 
 @router.get("/api/learning/history")
 def api_learning_history():
     log_event("api.learning.history", "SUCCESS")
-    return learning_history(limit=50)
+    return cached("learning_history_50", lambda: learning_history(limit=50))
 
 
 @router.get("/api/learning/weights")
 def api_learning_weights():
     log_event("api.learning.weights", "SUCCESS")
-    return learning_weights(limit=20)
+    return cached("learning_weights_20", lambda: learning_weights(limit=20))
 
 
 @router.get("/api/system")
 def api_system():
     log_event("api.system", "SUCCESS")
     return system_info()
+
+
+@router.get("/api/health")
+def api_health():
+    log_event("api.health", "SUCCESS")
+    return health_check()
+
+
+@router.get("/api/performance")
+def api_performance():
+    log_event("api.performance", "SUCCESS")
+    return system_performance()
 
 
 @router.get("/api/backtest-chart")

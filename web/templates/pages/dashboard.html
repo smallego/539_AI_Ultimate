@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="row g-3 mb-4">
+  <div class="col-6 col-xl-3"><div class="kpi-card"><span>Total Draws</span><strong id="draw-count">0</strong></div></div>
+  <div class="col-6 col-xl-3"><div class="kpi-card"><span>Predictions</span><strong id="prediction-count">0</strong></div></div>
+  <div class="col-6 col-xl-3"><div class="kpi-card"><span>Data Window</span><strong id="data-window-count">0</strong></div></div>
+  <div class="col-6 col-xl-3"><div class="kpi-card"><span>Dashboard File</span><strong id="dashboard-status">-</strong></div></div>
+</section>
+
+<section class="panel mb-4">
+  <div class="panel-title"><h2>System Health</h2><span id="system-health-status" class="badge text-bg-light">Checking</span></div>
+  <div class="health-grid">
+    <div class="health-item" id="health-database"><span>Database</span><strong>-</strong></div>
+    <div class="health-item" id="health-api"><span>API</span><strong>-</strong></div>
+    <div class="health-item" id="health-learning"><span>Learning</span><strong>-</strong></div>
+    <div class="health-item" id="health-dashboard"><span>Dashboard</span><strong>-</strong></div>
+    <div class="health-item" id="health-prediction"><span>Prediction</span><strong>-</strong></div>
+    <div class="health-item" id="health-runAll"><span>RunAll</span><strong>-</strong></div>
+  </div>
+</section>
+
+<section class="panel mb-4">
+  <div class="panel-title"><h2>System Performance</h2><span id="performance-status" class="badge text-bg-light">Loading</span></div>
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-xl-2"><div class="mini-metric"><span>Average API Time</span><strong id="perf-average-api">0 ms</strong></div></div>
+    <div class="col-6 col-xl-2"><div class="mini-metric"><span>Cache Hit</span><strong id="perf-cache-hit">0</strong></div></div>
+    <div class="col-6 col-xl-2"><div class="mini-metric"><span>Cache Miss</span><strong id="perf-cache-miss">0</strong></div></div>
+    <div class="col-6 col-xl-2"><div class="mini-metric"><span>Cache Hit Rate</span><strong id="perf-cache-rate">0%</strong></div></div>
+    <div class="col-6 col-xl-2"><div class="mini-metric"><span>Memory</span><strong id="perf-memory">-</strong></div></div>
+    <div class="col-6 col-xl-2"><div class="mini-metric"><span>CPU</span><strong id="perf-cpu">-</strong></div></div>
+  </div>
+  <div class="table-responsive performance-table-wrap">
+    <table class="table table-sm align-middle mb-0">
+      <thead><tr><th>Time</th><th>Method</th><th>Path</th><th class="text-end">Duration</th><th>Status</th></tr></thead>
+      <tbody id="performance-recent"><tr><td colspan="5" class="text-muted">Loading...</td></tr></tbody>
+    </table>
+  </div>
+</section>
+
+<section class="row g-4">
+  <div class="col-12 col-xl-6">
+    <div class="panel chart-panel">
+      <div class="panel-title"><h2>Sum Trend</h2><span id="data-window-status" class="badge text-bg-light">Loading</span></div>
+      <canvas id="sum-trend-chart" height="150"></canvas>
+    </div>
+  </div>
+  <div class="col-12 col-xl-6">
+    <div class="panel chart-panel">
+      <div class="panel-title"><h2>Hot Numbers TOP10</h2><span class="text-muted small">Recent 100 draws</span></div>
+      <canvas id="hot-chart" height="150"></canvas>
+    </div>
+  </div>
+  <div class="col-12 col-xl-6">
+    <div class="panel chart-panel">
+      <div class="panel-title"><h2>Cold Numbers TOP10</h2><span class="text-muted small">Recent 100 draws</span></div>
+      <canvas id="cold-chart" height="150"></canvas>
+    </div>
+  </div>
+  <div class="col-12 col-xl-3">
+    <div class="panel chart-panel"><div class="panel-title"><h2>Odd / Even</h2></div><canvas id="odd-even-chart" height="210"></canvas></div>
+  </div>
+  <div class="col-12 col-xl-3">
+    <div class="panel chart-panel"><div class="panel-title"><h2>Low / High</h2></div><canvas id="low-high-chart" height="210"></canvas></div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/pages/dashboard.js"></script>
+{% endblock %}

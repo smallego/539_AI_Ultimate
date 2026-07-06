@@ -1,5 +1,6 @@
 import json
 import logging
+import uuid
 from datetime import datetime
 
 from web.config import LOG_DIR
@@ -24,10 +25,18 @@ def get_logger():
     return logger
 
 
-def log_event(action, status="INFO", **details):
+def new_request_id():
+    return uuid.uuid4().hex[:12]
+
+
+def log_event(action, status="INFO", request_id=None, duration_ms=None, success=None, exception=None, **details):
     payload = {
         "action": action,
         "status": status,
+        "requestId": request_id,
+        "durationMs": duration_ms,
+        "success": success,
+        "exception": str(exception) if exception else None,
         "details": details,
     }
     get_logger().info(json.dumps(payload, ensure_ascii=False, default=str))

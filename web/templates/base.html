@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <title>{{ title }} - {{ page_title }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/static/css/layout.css" rel="stylesheet">
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark">539</span>
+        <div>
+          <strong>AI Ultimate</strong>
+          <small>Professional V7.0</small>
+        </div>
+      </div>
+      <nav class="nav flex-column gap-2">
+        {% for key, item in pages.items() %}
+          <a class="nav-link {% if active_page == key %}active{% endif %}" href="{{ item[1] }}">{{ item[0] }}</a>
+        {% endfor %}
+      </nav>
+    </aside>
+
+    <div class="main-shell">
+      <nav class="navbar navbar-expand-lg bg-white border-bottom topnav">
+        <div class="container-fluid">
+          <span class="navbar-brand fw-bold">{{ page_title }}</span>
+          <div class="ms-auto d-flex gap-2 align-items-center">
+            <span id="run-state" class="badge text-bg-secondary">Ready</span>
+            <button id="refresh-btn" class="btn btn-outline-secondary btn-sm" type="button">Refresh</button>
+          </div>
+        </div>
+      </nav>
+
+      <main class="content">
+        <nav aria-label="breadcrumb" class="mb-3">
+          <ol class="breadcrumb">
+            {% for crumb in breadcrumb %}
+              <li class="breadcrumb-item {% if loop.last %}active{% endif %}">{{ crumb }}</li>
+            {% endfor %}
+          </ol>
+        </nav>
+
+        {% block content %}{% endblock %}
+      </main>
+
+      <footer class="footer">
+        <span>539 AI Ultimate Professional</span>
+        <span id="footer-version">Version -</span>
+      </footer>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/static/js/common.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

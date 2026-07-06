@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="row g-4">
+  <div class="col-12 col-xl-4">
+    <div class="panel h-100">
+      <div class="panel-title"><h2>Latest Draw</h2><span id="data-status" class="badge text-bg-light">Loading</span></div>
+      <div class="latest-draw">
+        <span>Draw No.</span>
+        <strong id="data-latest-draw-no">-</strong>
+        <small id="data-latest-draw-date">-</small>
+        <div id="data-latest-draw-numbers" class="number-line">-</div>
+      </div>
+      <div class="row g-3">
+        <div class="col-6"><div class="mini-metric"><span>Total Draws</span><strong id="data-database-count">0</strong></div></div>
+        <div class="col-6"><div class="mini-metric"><span>Window</span><strong id="data-window-count">0</strong></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-8">
+    <div class="panel chart-panel">
+      <div class="panel-title"><h2>Sum / Span Trend</h2><span class="text-muted small">Recent 100 draws</span></div>
+      <canvas id="data-trend-chart" height="150"></canvas>
+    </div>
+  </div>
+  <div class="col-12 col-xl-6">
+    <div class="panel chart-panel"><div class="panel-title"><h2>Hot Numbers</h2></div><canvas id="data-hot-chart" height="160"></canvas></div>
+  </div>
+  <div class="col-12 col-xl-6">
+    <div class="panel chart-panel"><div class="panel-title"><h2>Cold Numbers</h2></div><canvas id="data-cold-chart" height="160"></canvas></div>
+  </div>
+  <div class="col-12 col-xl-6">
+    <div class="panel chart-panel"><div class="panel-title"><h2>Odd / Even Ratio</h2></div><canvas id="data-odd-even-chart" height="170"></canvas></div>
+  </div>
+  <div class="col-12 col-xl-6">
+    <div class="panel chart-panel"><div class="panel-title"><h2>Low / High Ratio</h2></div><canvas id="data-low-high-chart" height="170"></canvas></div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/pages/data.js"></script>
+{% endblock %}

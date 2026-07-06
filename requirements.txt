@@ -1,7 +1,8 @@
-pandas
-openpyxl
-requests
 beautifulsoup4
+fastapi
+jinja2
 lxml
-pytest
-pyinstaller
+openpyxl
+pandas
+requests
+uvicorn

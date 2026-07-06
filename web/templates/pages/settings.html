@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="row g-4">
+  <div class="col-12 col-xl-7">
+    <div class="panel h-100">
+      <div class="panel-title"><h2>System Info</h2><span id="settings-status" class="badge text-bg-light">Loading</span></div>
+      <div class="row g-3">
+        <div class="col-6 col-xl-4"><div class="mini-metric"><span>Version</span><strong id="settings-version">-</strong></div></div>
+        <div class="col-6 col-xl-4"><div class="mini-metric"><span>Model</span><strong id="settings-model">-</strong></div></div>
+        <div class="col-6 col-xl-4"><div class="mini-metric"><span>Build Time</span><strong id="settings-build-time">-</strong></div></div>
+        <div class="col-6 col-xl-4"><div class="mini-metric"><span>Git Branch</span><strong id="settings-git-branch">-</strong></div></div>
+        <div class="col-6 col-xl-4"><div class="mini-metric"><span>Git Commit</span><strong id="settings-git-commit">-</strong></div></div>
+        <div class="col-6 col-xl-4"><div class="mini-metric"><span>Dashboard Time</span><strong id="settings-dashboard-time">-</strong></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-5">
+    <div class="panel h-100">
+      <div class="panel-title"><h2>Data Counts</h2></div>
+      <div class="row g-3">
+        <div class="col-4"><div class="mini-metric"><span>Draws</span><strong id="settings-database-count">0</strong></div></div>
+        <div class="col-4"><div class="mini-metric"><span>Predictions</span><strong id="settings-prediction-count">0</strong></div></div>
+        <div class="col-4"><div class="mini-metric"><span>Learning</span><strong id="settings-learning-count">0</strong></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12">
+    <div class="panel">
+      <div class="panel-title"><h2>System Health</h2><span id="settings-health-status" class="badge text-bg-light">Checking</span></div>
+      <div class="health-grid">
+        <div class="health-item" id="settings-health-database"><span>Database</span><strong>-</strong></div>
+        <div class="health-item" id="settings-health-api"><span>API</span><strong>-</strong></div>
+        <div class="health-item" id="settings-health-learning"><span>Learning</span><strong>-</strong></div>
+        <div class="health-item" id="settings-health-dashboard"><span>Dashboard</span><strong>-</strong></div>
+        <div class="health-item" id="settings-health-prediction"><span>Prediction</span><strong>-</strong></div>
+        <div class="health-item" id="settings-health-runAll"><span>RunAll</span><strong>-</strong></div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/pages/settings.js"></script>
+{% endblock %}

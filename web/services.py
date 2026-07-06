@@ -4,6 +4,9 @@ import subprocess
 import csv
 from collections import Counter
 
+from core.explainer import explain_prediction
+from web.cache import cache_stats, performance_stats
+
 from web.config import (
     API_SCRIPTS,
     BACKTEST_REPORT,
@@ -260,6 +263,38 @@ def prediction_history(limit=50):
     rows = cur.fetchall()
     conn.close()
     return [format_prediction(row) for row in rows]
+
+
+def prediction_by_id(prediction_id):
+    if not DATABASE_PATH.exists():
+        return None
+
+    ensure_prediction_history_schema()
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT *
+        FROM prediction_history
+        WHERE id = ?
+        LIMIT 1
+        """,
+        (prediction_id,),
+    )
+    row = cur.fetchone()
+    conn.close()
+    return format_prediction(row) if row else None
+
+
+def explain_latest_predictions():
+    return [explain_prediction(prediction) for prediction in latest_predictions()]
+
+
+def explain_prediction_by_id(prediction_id):
+    prediction = prediction_by_id(prediction_id)
+    if prediction is None:
+        return None
+    return explain_prediction(prediction)
 
 
 def empty_dashboard_data():
@@ -726,3 +761,46 @@ def system_info():
         "backtestReportExists": BACKTEST_REPORT.exists(),
         "health": system_health(),
     }
+
+
+def health_check():
+    health = system_health()
+    cache = cache_stats()
+    performance = performance_stats()
+
+    try:
+        explain_ok = bool(explain_latest_predictions())
+    except Exception:
+        explain_ok = False
+
+    return {
+        "database": health["database"],
+        "prediction": health["prediction"],
+        "learning": health["learning"],
+        "dashboard": health["dashboard"],
+        "backtest": {
+            "ok": BACKTEST_REPORT.exists(),
+            "label": "ready" if BACKTEST_REPORT.exists() else "missing",
+        },
+        "explain": {
+            "ok": explain_ok,
+            "label": "ready" if explain_ok else "no prediction data",
+        },
+        "cache": {
+            "ok": True,
+            "label": f"{cache['size']} items, {cache['hitRate']}% hit",
+            "stats": cache,
+        },
+        "logger": {
+            "ok": True,
+            "label": "enabled",
+        },
+        "api": {
+            "ok": True,
+            "label": f"{performance['averageApiTime']} ms avg",
+        },
+    }
+
+
+def system_performance():
+    return performance_stats()

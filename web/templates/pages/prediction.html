@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="row g-4">
+  <div class="col-12 col-xl-5">
+    <div class="panel h-100">
+      <div class="panel-title"><h2>Today Recommendations</h2><span id="db-status" class="badge text-bg-light">Checking</span></div>
+      <div class="latest-draw">
+        <span>Latest Draw</span>
+        <strong id="latest-draw-no">-</strong>
+        <small id="latest-draw-date">-</small>
+        <div id="latest-draw-numbers" class="number-line">-</div>
+      </div>
+      <div id="prediction-list" class="recommendations"></div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-7">
+    <div class="panel h-100">
+      <div class="panel-title"><h2>Prediction History</h2><span class="text-muted small">Latest 50 rows</span></div>
+      <div class="table-responsive history-table-wrap">
+        <table class="table table-sm align-middle mb-0">
+          <thead><tr><th>Time</th><th>Set</th><th>Numbers</th><th class="text-end">Final</th><th class="text-end">AI</th></tr></thead>
+          <tbody id="prediction-history"><tr><td colspan="5" class="text-muted">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-12">
+    <div class="panel">
+      <div class="panel-title">
+        <h2>Actions</h2>
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn btn-primary btn-sm" data-action="/api/predict">Prediction</button>
+          <button class="btn btn-outline-primary btn-sm" data-action="/api/run-all">Run All</button>
+          <button class="btn btn-outline-secondary btn-sm" data-action="/api/update">API Update</button>
+        </div>
+      </div>
+      <pre id="output">Ready.</pre>
+    </div>
+  </div>
+</section>
+
+<div class="offcanvas offcanvas-end explain-drawer" tabindex="-1" id="explain-drawer" aria-labelledby="explain-drawer-title">
+  <div class="offcanvas-header">
+    <div>
+      <h5 class="offcanvas-title" id="explain-drawer-title">Explain Report</h5>
+      <small id="explain-subtitle" class="text-muted">Prediction explainability</small>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <div class="decision-score mb-3">
+      <div id="explain-stars" class="decision-stars">-----</div>
+      <strong id="explain-score">0</strong>
+      <span>Decision Score</span>
+    </div>
+
+    <div class="row g-3 mb-4">
+      <div class="col-6"><div class="mini-metric"><span>Confidence</span><strong id="explain-confidence">-</strong></div></div>
+      <div class="col-6"><div class="mini-metric"><span>Risk</span><strong id="explain-risk">-</strong></div></div>
+    </div>
+
+    <div class="panel-lite mb-4">
+      <h6>Reasons</h6>
+      <div id="explain-reasons" class="explain-reasons"></div>
+    </div>
+
+    <div class="panel-lite">
+      <h6>Explain Timeline</h6>
+      <div id="explain-timeline" class="explain-timeline"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/pages/prediction.js"></script>
+{% endblock %}
