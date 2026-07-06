@@ -31,6 +31,8 @@ from web.services import (
     learning_history,
     learning_weights,
     prediction_history,
+    strategy_lab,
+    strategy_optimizer,
     system_performance,
     system_info,
 )
@@ -45,6 +47,7 @@ PAGE_META = {
     "decision": ("Decision", "/decision"),
     "learning": ("Learning", "/learning"),
     "backtest": ("Backtest", "/backtest"),
+    "strategy": ("Strategy Lab", "/strategy"),
     "data": ("Data Center", "/data"),
     "settings": ("Settings", "/settings"),
 }
@@ -216,6 +219,12 @@ def backtest_page(request: Request):
     return render_page(request, "pages/backtest.html", "backtest")
 
 
+@router.get("/strategy")
+def strategy_page(request: Request):
+    log_event("page.strategy", "SUCCESS")
+    return render_page(request, "pages/strategy.html", "strategy")
+
+
 @router.get("/data")
 def data_page(request: Request):
     log_event("page.data", "SUCCESS")
@@ -283,6 +292,24 @@ def api_decision():
 def api_backtest_center():
     log_event("api.backtest_center", "SUCCESS")
     return cached("backtest_center", backtest_center)
+
+
+@router.get("/api/strategies")
+def api_strategies():
+    log_event("api.strategies", "SUCCESS")
+    return cached("strategies", lambda: strategy_lab()["strategies"])
+
+
+@router.get("/api/strategy-lab")
+def api_strategy_lab():
+    log_event("api.strategy_lab", "SUCCESS")
+    return cached("strategy_lab", strategy_lab)
+
+
+@router.get("/api/strategy-optimizer")
+def api_strategy_optimizer():
+    log_event("api.strategy_optimizer", "SUCCESS")
+    return cached("strategy_optimizer", strategy_optimizer)
 
 
 @router.get("/api/predictions/latest")

@@ -5,6 +5,7 @@ import csv
 from collections import Counter
 
 from core.explainer import explain_prediction
+from core.strategy_optimizer import compare_strategies, rank_strategies, recommend_best_strategy
 from web.cache import cache_stats, performance_stats
 
 from web.config import (
@@ -654,6 +655,219 @@ def backtest_center():
             for match in range(0, 6)
         ],
         "recentRows": list(reversed(rows[-50:])),
+    }
+
+
+def read_learning_strategy_rows(limit=50):
+    if not DATABASE_PATH.exists():
+        return []
+
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            """
+            SELECT *
+            FROM learning_history
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            (limit,),
+        )
+        rows = cur.fetchall()
+    except sqlite3.Error:
+        rows = []
+    conn.close()
+    return rows
+
+
+def read_prediction_strategy_rows(limit=50):
+    if not DATABASE_PATH.exists():
+        return []
+
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            """
+            SELECT *
+            FROM prediction_history
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            (limit,),
+        )
+        rows = cur.fetchall()
+    except sqlite3.Error:
+        rows = []
+    conn.close()
+    return rows
+
+
+def risk_from_metrics(roi, hit2_rate, volatility=0):
+    if roi < -70 or hit2_rate < 18 or volatility > 80:
+        return "High"
+    if roi < -35 or hit2_rate < 32 or volatility > 45:
+        return "Medium"
+    return "Low"
+
+
+def risk_score(label):
+    return {"Low": 80, "Medium": 50, "High": 25}.get(label, 50)
+
+
+def strategy_score(roi, hit2_rate, hit3_rate, risk):
+    roi_component = clamp(roi + 100)
+    hit_component = clamp(hit2_rate * 0.65 + hit3_rate * 1.25)
+    return round(roi_component * 0.42 + hit_component * 0.38 + risk_score(risk) * 0.20, 2)
+
+
+def backtest_strategy():
+    data = backtest_center()
+    summary = data["summary"]
+    roi_values = [row["value"] for row in data.get("roiTrend", [])]
+    volatility = 0
+    if len(roi_values) >= 2:
+        deltas = [abs(roi_values[index] - roi_values[index - 1]) for index in range(1, len(roi_values))]
+        volatility = average(deltas, default=0)
+
+    roi = summary.get("cumulative_roi", 0)
+    hit2 = summary.get("hit2_rate", 0)
+    hit3 = summary.get("hit3_rate", 0)
+    risk = risk_from_metrics(roi, hit2, volatility)
+    return {
+        "id": "backtest",
+        "name": "Backtest Strategy",
+        "source": "reports/backtest_result.csv",
+        "roi": round(roi, 2),
+        "hit2Rate": round(hit2, 2),
+        "hit3Rate": round(hit3, 2),
+        "risk": risk,
+        "score": strategy_score(roi, hit2, hit3, risk),
+        "sampleSize": summary.get("total_periods", 0),
+    }
+
+
+def learning_strategy():
+    rows = read_learning_strategy_rows(limit=50)
+    if not rows:
+        roi = hit2 = hit3 = 0
+    else:
+        roi = average([row["roi"] for row in rows[:10]], default=0)
+        hit2 = average([row["hit2"] for row in rows[:10]], default=0)
+        hit3 = average([row["hit3"] for row in rows[:10]], default=0)
+
+    risk = risk_from_metrics(roi, hit2)
+    return {
+        "id": "learning",
+        "name": "Learning Strategy",
+        "source": "learning_history",
+        "roi": round(roi, 2),
+        "hit2Rate": round(hit2, 2),
+        "hit3Rate": round(hit3, 2),
+        "risk": risk,
+        "score": strategy_score(roi, hit2, hit3, risk),
+        "sampleSize": len(rows),
+    }
+
+
+def prediction_strategy():
+    rows = read_prediction_strategy_rows(limit=50)
+    if not rows:
+        ai = final = 0
+    else:
+        ai = average([row["ai_score"] for row in rows], default=0)
+        final = average([row["final_score"] for row in rows], default=0) * 100
+
+    roi = clamp(((final + ai) / 2) - 100, -100, 100)
+    hit2 = clamp(ai * 0.48)
+    hit3 = clamp(final * 0.18)
+    risk = risk_from_metrics(roi, hit2)
+    return {
+        "id": "prediction",
+        "name": "Prediction Strategy",
+        "source": "prediction_history",
+        "roi": round(roi, 2),
+        "hit2Rate": round(hit2, 2),
+        "hit3Rate": round(hit3, 2),
+        "risk": risk,
+        "score": strategy_score(roi, hit2, hit3, risk),
+        "sampleSize": len(rows),
+    }
+
+
+def hybrid_strategy(strategies):
+    if not strategies:
+        roi = hit2 = hit3 = 0
+    else:
+        total_score = sum(max(item["score"], 1) for item in strategies)
+        roi = sum(item["roi"] * max(item["score"], 1) for item in strategies) / total_score
+        hit2 = sum(item["hit2Rate"] * max(item["score"], 1) for item in strategies) / total_score
+        hit3 = sum(item["hit3Rate"] * max(item["score"], 1) for item in strategies) / total_score
+
+    risk = risk_from_metrics(roi, hit2)
+    return {
+        "id": "hybrid",
+        "name": "Hybrid Strategy",
+        "source": "weighted aggregate",
+        "roi": round(roi, 2),
+        "hit2Rate": round(hit2, 2),
+        "hit3Rate": round(hit3, 2),
+        "risk": risk,
+        "score": strategy_score(roi, hit2, hit3, risk),
+        "sampleSize": sum(item["sampleSize"] for item in strategies),
+    }
+
+
+def strategy_lab():
+    base_strategies = [
+        backtest_strategy(),
+        learning_strategy(),
+        prediction_strategy(),
+    ]
+    strategies = base_strategies + [hybrid_strategy(base_strategies)]
+    ranking = sorted(strategies, key=lambda item: item["score"], reverse=True)
+    labels = [item["name"] for item in ranking]
+    recommended = ranking[0] if ranking else None
+
+    return {
+        "strategies": strategies,
+        "ranking": ranking,
+        "roiCompare": {
+            "labels": labels,
+            "values": [item["roi"] for item in ranking],
+        },
+        "hitCompare": {
+            "labels": labels,
+            "hit2": [item["hit2Rate"] for item in ranking],
+            "hit3": [item["hit3Rate"] for item in ranking],
+        },
+        "riskCompare": [
+            {
+                "name": item["name"],
+                "risk": item["risk"],
+                "riskScore": risk_score(item["risk"]),
+                "sampleSize": item["sampleSize"],
+            }
+            for item in ranking
+        ],
+        "recommendation": {
+            "strategy": recommended["name"] if recommended else "-",
+            "score": recommended["score"] if recommended else 0,
+            "risk": recommended["risk"] if recommended else "-",
+            "reason": (
+                f"{recommended['name']} has the best combined ROI, hit-rate, and risk score."
+                if recommended else "No strategy data available yet."
+            ),
+        },
+    }
+
+
+def strategy_optimizer():
+    return {
+        "strategies": rank_strategies(),
+        "comparison": compare_strategies(),
+        "recommendation": recommend_best_strategy(),
     }
 
 

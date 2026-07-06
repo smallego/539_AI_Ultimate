@@ -327,14 +327,16 @@ body {
 
 .history-table-wrap,
 .backtest-table-wrap,
-.performance-table-wrap {
+.performance-table-wrap,
+.strategy-table-wrap {
   max-height: 360px;
   overflow: auto;
 }
 
 .history-table-wrap thead th,
 .backtest-table-wrap thead th,
-.performance-table-wrap thead th {
+.performance-table-wrap thead th,
+.strategy-table-wrap thead th {
   position: sticky;
   top: 0;
   z-index: 1;
@@ -438,6 +440,51 @@ body {
 .timeline-item strong,
 .timeline-item small {
   display: block;
+}
+
+.risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+
+.risk-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid #e7eef6;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.risk-card span,
+.risk-card small {
+  display: block;
+  color: var(--muted);
+}
+
+.risk-card strong {
+  display: block;
+}
+
+.risk-card b {
+  font-size: 1.4rem;
+}
+
+.optimizer-reasons {
+  display: grid;
+  gap: 8px;
+}
+
+.optimizer-reason {
+  padding: 10px 12px;
+  border: 1px solid #e7eef6;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  font-size: 0.92rem;
 }
 
 pre {
