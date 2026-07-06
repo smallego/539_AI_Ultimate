@@ -1,4 +1,4 @@
 black
+httpx
 pytest
 ruff
-httpx2

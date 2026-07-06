@@ -10,7 +10,17 @@ def test_api_status_smoke():
 
 def test_api_health_smoke():
     data = assert_ok(client().get("/api/health"))
-    for key in ["database", "prediction", "learning", "dashboard", "backtest", "explain", "cache", "logger"]:
+    expected = [
+        "database",
+        "prediction",
+        "learning",
+        "dashboard",
+        "backtest",
+        "explain",
+        "cache",
+        "logger",
+    ]
+    for key in expected:
         assert key in data
         assert "ok" in data[key]
 

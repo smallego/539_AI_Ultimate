@@ -1,6 +1,8 @@
 from pathlib import Path
 import sys
 
+import pytest
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR / "core"))
 
@@ -8,6 +10,9 @@ from core.engine import build_final_weights
 
 
 def test_engine_final_weights():
+    if not (BASE_DIR / "database" / "history.db").exists():
+        pytest.skip("local SQLite database is not available in CI")
+
     result = build_final_weights()
 
     assert "final_weights" in result

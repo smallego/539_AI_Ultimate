@@ -14,7 +14,8 @@ def test_explainer_engine_format():
             "created_at": "test",
         }
     )
-    assert {"decisionScore", "confidence", "risk", "reasons", "timeline"}.issubset(report)
+    expected = {"decisionScore", "confidence", "risk", "reasons", "timeline"}
+    assert expected.issubset(report)
     assert 0 <= report["decisionScore"] <= 100
     assert isinstance(report["reasons"], list)
 
@@ -24,7 +25,8 @@ def test_explain_latest_api_smoke():
     assert isinstance(data, list)
     if not data:
         return
-    assert {"decisionScore", "confidence", "risk", "reasons", "timeline"}.issubset(data[0])
+    expected = {"decisionScore", "confidence", "risk", "reasons", "timeline"}
+    assert expected.issubset(data[0])
 
 
 def test_explain_by_id_api_smoke():

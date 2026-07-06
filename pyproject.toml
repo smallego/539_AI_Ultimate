@@ -1,0 +1,29 @@
+[tool.black]
+line-length = 120
+extend-exclude = '''
+/(
+  app
+  | analytics
+  | core
+  | dashboard
+  | database
+  | models
+  | web
+)/
+'''
+
+[tool.ruff]
+line-length = 120
+extend-exclude = [
+  "app",
+  "analytics",
+  "core",
+  "dashboard",
+  "database",
+  "models",
+  "web",
+]
+
+[tool.ruff.lint]
+select = ["E", "F"]
+ignore = ["E402"]
