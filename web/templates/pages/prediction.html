@@ -1,12 +1,28 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="row g-4">
+<section class="panel mb-4">
+  <div class="panel-title"><h2 data-i18n="signal.title">AI Buy Signal</h2><span id="signal-badge" class="badge text-bg-secondary" data-i18n="status.loading">Loading</span></div>
+  <div class="row g-3 align-items-center">
+    <div class="col-12 col-xl-3">
+      <div class="decision-score score-primary">
+        <div id="signal-stars" class="decision-stars">-----</div>
+        <strong id="signal-score">0</strong>
+        <span data-i18n="signal.score">Signal Score</span>
+      </div>
+    </div>
+    <div class="col-6 col-xl-2"><div class="mini-metric"><span data-i18n="label.confidence">label.confidence</span><strong id="signal-confidence">-</strong></div></div>
+    <div class="col-6 col-xl-2"><div class="mini-metric"><span data-i18n="label.risk">Risk</span><strong id="signal-risk">-</strong></div></div>
+    <div class="col-12 col-xl-5"><div class="mini-metric"><span data-i18n="signal.reason">Reason</span><strong id="signal-reason">-</strong></div></div>
+  </div>
+</section>
+
+<section class="row g-4 mb-4">
   <div class="col-12 col-xl-5">
     <div class="panel h-100">
-      <div class="panel-title"><h2>Today Recommendations</h2><span id="db-status" class="badge text-bg-light">Checking</span></div>
+      <div class="panel-title"><h2 data-i18n="label.todayRecommendations">Today Recommendations</h2><span id="db-status" class="badge text-bg-light" data-i18n="status.checking">Checking</span></div>
       <div class="latest-draw">
-        <span>Latest Draw</span>
+        <span data-i18n="label.latestDraw">Latest Draw</span>
         <strong id="latest-draw-no">-</strong>
         <small id="latest-draw-date">-</small>
         <div id="latest-draw-numbers" class="number-line">-</div>
@@ -16,63 +32,65 @@
   </div>
   <div class="col-12 col-xl-7">
     <div class="panel h-100">
-      <div class="panel-title"><h2>Prediction History</h2><span class="text-muted small">Latest 50 rows</span></div>
-      <div class="table-responsive history-table-wrap">
-        <table class="table table-sm align-middle mb-0">
-          <thead><tr><th>Time</th><th>Set</th><th>Numbers</th><th class="text-end">Final</th><th class="text-end">AI</th></tr></thead>
-          <tbody id="prediction-history"><tr><td colspan="5" class="text-muted">Loading...</td></tr></tbody>
-        </table>
+      <div class="panel-title"><h2 data-i18n="prediction.analysis">Result Analysis</h2><span id="prediction-analysis-status" class="badge text-bg-light" data-i18n="prediction.waiting">Waiting</span></div>
+      <div class="row g-2 mb-3">
+        <div class="col-6 col-xl-4"><div class="mini-metric"><span data-i18n="prediction.analysis_period">Analysis Period</span><strong id="analysis-period">-</strong></div></div>
+        <div class="col-6 col-xl-4"><div class="mini-metric"><span data-i18n="prediction.draw_period">Draw Period</span><strong id="analysis-draw-period">-</strong></div></div>
+        <div class="col-12 col-xl-4"><div class="mini-metric"><span data-i18n="prediction.draw_numbers">Draw Numbers</span><strong id="analysis-draw-numbers">-</strong></div></div>
+        <div class="col-6 col-xl-4"><div class="mini-metric"><span data-i18n="prediction.best_match">Best Match</span><strong id="analysis-best-match">-</strong></div></div>
+        <div class="col-6 col-xl-4"><div class="mini-metric"><span data-i18n="prediction.best_set">Best Set</span><strong id="analysis-best-set">-</strong></div></div>
+        <div class="col-6 col-xl-4"><div class="mini-metric"><span data-i18n="prediction.average_hit">Average Hit</span><strong id="analysis-average-hits">-</strong></div></div>
+        <div class="col-6 col-xl-4"><div class="mini-metric"><span data-i18n="prediction.hit_rate">Hit Rate</span><strong id="analysis-highest-hit-rate">-</strong></div></div>
+        <div class="col-6 col-xl-4"><div class="mini-metric"><span data-i18n="prediction.total_prize">Total Prize</span><strong id="analysis-total-prize">-</strong></div></div>
+        <div class="col-6 col-xl-4"><div class="mini-metric"><span data-i18n="prediction.has_winner">Has Winner</span><strong id="analysis-has-winner">-</strong></div></div>
       </div>
-    </div>
-  </div>
-  <div class="col-12">
-    <div class="panel">
-      <div class="panel-title">
-        <h2>Actions</h2>
-        <div class="d-flex gap-2 flex-wrap">
-          <button class="btn btn-primary btn-sm" data-action="/api/predict">Prediction</button>
-          <button class="btn btn-outline-primary btn-sm" data-action="/api/run-all">Run All</button>
-          <button class="btn btn-outline-secondary btn-sm" data-action="/api/update">API Update</button>
-        </div>
-      </div>
-      <pre id="output">Ready.</pre>
+      <div id="prediction-analysis-list" class="recommendations"></div>
     </div>
   </div>
 </section>
 
-<div class="offcanvas offcanvas-end explain-drawer" tabindex="-1" id="explain-drawer" aria-labelledby="explain-drawer-title">
-  <div class="offcanvas-header">
-    <div>
-      <h5 class="offcanvas-title" id="explain-drawer-title">Explain Report</h5>
-      <small id="explain-subtitle" class="text-muted">Prediction explainability</small>
-    </div>
-    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+<section class="row g-4 mb-4">
+  <div class="col-12 col-md-6">
+    <div class="panel pro-trend-panel"><div class="panel-title"><h2 data-i18n="prediction.hit_distribution">prediction.hit_distribution</h2></div><canvas id="prediction-hit-distribution"></canvas></div>
   </div>
-  <div class="offcanvas-body">
-    <div class="decision-score mb-3">
-      <div id="explain-stars" class="decision-stars">-----</div>
-      <strong id="explain-score">0</strong>
-      <span>Decision Score</span>
-    </div>
+  <div class="col-12 col-md-6">
+    <div class="panel pro-trend-panel"><div class="panel-title"><h2 data-i18n="prediction.prize_distribution">prediction.prize_distribution</h2></div><canvas id="prediction-prize-distribution"></canvas></div>
+  </div>
+  <div class="col-12 col-md-6">
+    <div class="panel pro-trend-panel"><div class="panel-title"><h2 data-i18n="prediction.ai_score_distribution">prediction.ai_score_distribution</h2></div><canvas id="prediction-ai-score-distribution"></canvas></div>
+  </div>
+  <div class="col-12 col-md-6">
+    <div class="panel pro-trend-panel"><div class="panel-title"><h2 data-i18n="prediction.score_bucket_avg_hits">prediction.score_bucket_avg_hits</h2></div><canvas id="prediction-score-bucket-average-hits"></canvas></div>
+  </div>
+</section>
 
-    <div class="row g-3 mb-4">
-      <div class="col-6"><div class="mini-metric"><span>Confidence</span><strong id="explain-confidence">-</strong></div></div>
-      <div class="col-6"><div class="mini-metric"><span>Risk</span><strong id="explain-risk">-</strong></div></div>
-    </div>
-
-    <div class="panel-lite mb-4">
-      <h6>Reasons</h6>
-      <div id="explain-reasons" class="explain-reasons"></div>
-    </div>
-
-    <div class="panel-lite">
-      <h6>Explain Timeline</h6>
-      <div id="explain-timeline" class="explain-timeline"></div>
+<section class="row g-4 mb-4">
+  <div class="col-12 col-xl-5">
+    <div class="panel h-100">
+      <div class="panel-title"><h2 data-i18n="prediction.set_performance">Set Performance</h2></div>
+      <div id="set-performance" class="risk-grid"></div>
     </div>
   </div>
-</div>
+  <div class="col-12 col-xl-7">
+    <div class="panel h-100">
+      <div class="panel-title"><h2 data-i18n="prediction.heatmap">Heatmap</h2></div>
+      <div id="set-hit-heatmap" class="heatmap-grid mb-3"></div>
+      <div id="number-hit-heatmap" class="number-heatmap"></div>
+    </div>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-title"><h2 data-i18n="label.predictionHistory">Prediction History</h2><span class="text-muted small" data-i18n="label.latest50">Latest 50 rows</span></div>
+  <div class="table-responsive history-table-wrap">
+    <table class="table table-sm align-middle mb-0">
+      <thead><tr><th data-i18n="label.time">Time</th><th data-i18n="label.set">Set</th><th data-i18n="label.numbers">Numbers</th><th class="text-end" data-i18n="prediction.hits">Hits</th><th data-i18n="prediction.matched">Matched</th><th data-i18n="prediction.prize_level">Prize Level</th><th class="text-end" data-i18n="prediction.prize">Prize</th><th data-i18n="prediction.status">Status</th><th class="text-end" data-i18n="prediction.final">prediction.final</th><th class="text-end" data-i18n="label.ai">AI</th><th data-i18n="label.explain">Explain</th></tr></thead>
+      <tbody id="prediction-history"><tr><td colspan="11" class="text-muted" data-i18n="status.loading">Loading</td></tr></tbody>
+    </table>
+  </div>
+</section>
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/pages/prediction.js"></script>
+<script src="/static/js/pages/prediction.js?v=8.6.0"></script>
 {% endblock %}

@@ -1,19 +1,50 @@
 {% extends "base.html" %}
 
 {% block content %}
+<section class="panel mb-4">
+  <div class="panel-title"><h2 data-i18n="signal.title">AI Buy Signal</h2><span id="signal-badge" class="badge text-bg-secondary" data-i18n="status.loading">Loading</span></div>
+  <div class="row g-3 align-items-center">
+    <div class="col-12 col-xl-3">
+      <div class="decision-score score-primary">
+        <div id="signal-stars" class="decision-stars">-----</div>
+        <strong id="signal-score">0</strong>
+        <span data-i18n="signal.score">Signal Score</span>
+      </div>
+    </div>
+    <div class="col-6 col-xl-2"><div class="mini-metric"><span data-i18n="label.confidence">label.confidence</span><strong id="signal-confidence">-</strong></div></div>
+    <div class="col-6 col-xl-2"><div class="mini-metric"><span data-i18n="label.risk">Risk</span><strong id="signal-risk">-</strong></div></div>
+    <div class="col-12 col-xl-5"><div class="mini-metric"><span data-i18n="signal.reason">Reason</span><strong id="signal-reason">-</strong></div></div>
+  </div>
+</section>
+
 <section class="panel decision-card">
-  <div class="panel-title"><h2>Decision Center</h2><span id="decision-recommendation" class="badge text-bg-primary">Loading</span></div>
+  <div class="panel-title"><h2 data-i18n="label.decisionCenter">Decision Center</h2><span id="decision-recommendation" class="badge text-bg-primary" data-i18n="status.loading">Loading</span></div>
   <div class="row g-4 align-items-center">
     <div class="col-12 col-xl-3">
       <div class="decision-score">
         <div id="decision-stars" class="decision-stars">-----</div>
         <strong id="decision-score">0</strong>
-        <span>Decision Score</span>
+        <span data-i18n="label.decisionScore">label.decisionScore</span>
       </div>
     </div>
-    <div class="col-6 col-xl-2"><div class="mini-metric"><span>Confidence</span><strong id="decision-confidence">-</strong></div></div>
-    <div class="col-6 col-xl-2"><div class="mini-metric"><span>Risk</span><strong id="decision-risk">-</strong></div></div>
-    <div class="col-12 col-xl-5"><div id="decision-reasons" class="decision-reasons"></div></div>
+    <div class="col-6 col-xl-2"><div class="mini-metric"><span data-i18n="label.confidence">label.confidence</span><strong id="decision-confidence">-</strong></div></div>
+    <div class="col-6 col-xl-2"><div class="mini-metric"><span data-i18n="label.risk">Risk</span><strong id="decision-risk">-</strong></div></div>
+    <div class="col-6 col-xl-2"><div class="mini-metric"><span data-i18n="label.recommendation">Recommendation</span><strong id="decision-recommendation-text">-</strong></div></div>
+  </div>
+
+  <div class="mt-4">
+    <div class="panel-title">
+      <h2 data-i18n="decision.current_prediction">Current Prediction</h2>
+      <span class="text-muted small" data-i18n="label.latestDraw">Latest Draw</span>
+    </div>
+    <div id="decision-current-predictions" class="recommendations decision-current-predictions">
+      <div class="empty-state" data-i18n="status.loading">Loading</div>
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <div class="panel-title"><h2 data-i18n="label.reasons">Reasons</h2></div>
+    <div id="decision-reasons" class="decision-reasons"></div>
   </div>
 </section>
 {% endblock %}

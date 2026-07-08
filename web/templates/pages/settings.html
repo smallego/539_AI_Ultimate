@@ -4,37 +4,92 @@
 <section class="row g-4">
   <div class="col-12 col-xl-7">
     <div class="panel h-100">
-      <div class="panel-title"><h2>System Info</h2><span id="settings-status" class="badge text-bg-light">Loading</span></div>
+      <div class="panel-title"><h2 data-i18n="label.systemInfo">System Info</h2><span id="settings-status" class="badge text-bg-light" data-i18n="status.loading">Loading</span></div>
       <div class="row g-3">
-        <div class="col-6 col-xl-4"><div class="mini-metric"><span>Version</span><strong id="settings-version">-</strong></div></div>
-        <div class="col-6 col-xl-4"><div class="mini-metric"><span>Model</span><strong id="settings-model">-</strong></div></div>
-        <div class="col-6 col-xl-4"><div class="mini-metric"><span>Build Time</span><strong id="settings-build-time">-</strong></div></div>
-        <div class="col-6 col-xl-4"><div class="mini-metric"><span>Git Branch</span><strong id="settings-git-branch">-</strong></div></div>
-        <div class="col-6 col-xl-4"><div class="mini-metric"><span>Git Commit</span><strong id="settings-git-commit">-</strong></div></div>
-        <div class="col-6 col-xl-4"><div class="mini-metric"><span>Dashboard Time</span><strong id="settings-dashboard-time">-</strong></div></div>
+        <div class="col-6 col-xl-4"><div class="mini-metric"><span data-i18n="label.version">Version</span><strong id="settings-version">-</strong></div></div>
+        <div class="col-6 col-xl-4"><div class="mini-metric"><span data-i18n="label.model">Model</span><strong id="settings-model">-</strong></div></div>
+        <div class="col-6 col-xl-4"><div class="mini-metric"><span data-i18n="label.buildTime">Build Time</span><strong id="settings-build-time">-</strong></div></div>
+        <div class="col-6 col-xl-4"><div class="mini-metric"><span data-i18n="label.gitBranch">Git Branch</span><strong id="settings-git-branch">-</strong></div></div>
+        <div class="col-6 col-xl-4"><div class="mini-metric"><span data-i18n="label.gitCommit">Git Commit</span><strong id="settings-git-commit">-</strong></div></div>
+        <div class="col-6 col-xl-4"><div class="mini-metric"><span data-i18n="label.dashboardTime">Dashboard Time</span><strong id="settings-dashboard-time">-</strong></div></div>
       </div>
     </div>
   </div>
   <div class="col-12 col-xl-5">
     <div class="panel h-100">
-      <div class="panel-title"><h2>Data Counts</h2></div>
+      <div class="panel-title"><h2 data-i18n="label.dataCounts">Data Counts</h2></div>
       <div class="row g-3">
-        <div class="col-4"><div class="mini-metric"><span>Draws</span><strong id="settings-database-count">0</strong></div></div>
-        <div class="col-4"><div class="mini-metric"><span>Predictions</span><strong id="settings-prediction-count">0</strong></div></div>
-        <div class="col-4"><div class="mini-metric"><span>Learning</span><strong id="settings-learning-count">0</strong></div></div>
+        <div class="col-4"><div class="mini-metric"><span data-i18n="label.draws">Draws</span><strong id="settings-database-count">0</strong></div></div>
+        <div class="col-4"><div class="mini-metric"><span data-i18n="label.predictions">Predictions</span><strong id="settings-prediction-count">0</strong></div></div>
+        <div class="col-4"><div class="mini-metric"><span data-i18n="label.learning">Learning</span><strong id="settings-learning-count">0</strong></div></div>
       </div>
     </div>
   </div>
   <div class="col-12">
     <div class="panel">
-      <div class="panel-title"><h2>System Health</h2><span id="settings-health-status" class="badge text-bg-light">Checking</span></div>
+      <div class="panel-title"><h2 data-i18n="nav.settings">Settings</h2><span id="preferences-status" class="badge text-bg-light" data-i18n="status.ready">Ready</span></div>
+      <div class="row g-3">
+        <div class="col-12 col-md-6 col-xl-4">
+          <label class="form-label" data-i18n="label.language">Language</label>
+          <select id="pref-language" class="form-select">
+            <option value="zh-TW" data-i18n="language.zh">繁體中文</option>
+            <option value="en-US" data-i18n="language.en">English</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-6 col-xl-4">
+          <label class="form-label" data-i18n="label.theme">Theme</label>
+          <select id="pref-theme" class="form-select">
+            <option value="light" data-i18n="theme.light">Light</option>
+            <option value="dark" data-i18n="theme.dark">Dark</option>
+            <option value="auto" data-i18n="theme.auto">Auto</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-6 col-xl-4">
+          <label class="form-label" data-i18n="settings.default_page">Default Page</label>
+          <select id="pref-default-page" class="form-select">
+            <option value="/dashboard" data-i18n="nav.dashboard">Dashboard</option>
+            <option value="/prediction" data-i18n="nav.prediction">Prediction</option>
+            <option value="/decision" data-i18n="nav.decision">Decision</option>
+            <option value="/strategy" data-i18n="nav.strategy">Strategy Lab</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-6 col-xl-4">
+          <label class="form-label" data-i18n="settings.auto_refresh">Auto Refresh</label>
+          <select id="pref-auto-refresh" class="form-select">
+            <option value="0" data-i18n="settings.off">Off</option>
+            <option value="30" data-i18n="settings.30sec">30 sec</option>
+            <option value="60" data-i18n="settings.1min">1 min</option>
+            <option value="300" data-i18n="settings.5min">5 min</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-6 col-xl-4">
+          <label class="form-label" data-i18n="settings.chart_animation">Chart Animation</label>
+          <select id="pref-chart-animation" class="form-select">
+            <option value="on" data-i18n="settings.on">On</option>
+            <option value="off" data-i18n="settings.off">Off</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-6 col-xl-4">
+          <label class="form-label" data-i18n="settings.compact">Compact Mode</label>
+          <select id="pref-compact-mode" class="form-select">
+            <option value="off" data-i18n="settings.off">Off</option>
+            <option value="on" data-i18n="settings.on">On</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <div class="panel">
+      <div class="panel-title"><h2 data-i18n="label.systemHealth">System Health</h2><span id="settings-health-status" class="badge text-bg-light" data-i18n="status.checking">Checking</span></div>
       <div class="health-grid">
-        <div class="health-item" id="settings-health-database"><span>Database</span><strong>-</strong></div>
-        <div class="health-item" id="settings-health-api"><span>API</span><strong>-</strong></div>
-        <div class="health-item" id="settings-health-learning"><span>Learning</span><strong>-</strong></div>
-        <div class="health-item" id="settings-health-dashboard"><span>Dashboard</span><strong>-</strong></div>
-        <div class="health-item" id="settings-health-prediction"><span>Prediction</span><strong>-</strong></div>
-        <div class="health-item" id="settings-health-runAll"><span>RunAll</span><strong>-</strong></div>
+        <div class="health-item" id="settings-health-database"><span data-i18n="label.database">Database</span><strong>-</strong></div>
+        <div class="health-item" id="settings-health-api"><span data-i18n="label.api">API</span><strong>-</strong></div>
+        <div class="health-item" id="settings-health-learning"><span data-i18n="label.learning">Learning</span><strong>-</strong></div>
+        <div class="health-item" id="settings-health-dashboard"><span data-i18n="label.dashboard">Dashboard</span><strong>-</strong></div>
+        <div class="health-item" id="settings-health-prediction"><span data-i18n="label.prediction">Prediction</span><strong>-</strong></div>
+        <div class="health-item" id="settings-health-runAll"><span data-i18n="label.runAll">RunAll</span><strong>-</strong></div>
       </div>
     </div>
   </div>

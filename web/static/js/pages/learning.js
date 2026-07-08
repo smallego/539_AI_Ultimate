@@ -1,8 +1,8 @@
-function renderLearningWeights(weights) {
+﻿function renderLearningWeights(weights) {
   const box = byId("learning-weights");
   const entries = Object.entries(weights || {});
   if (entries.length === 0) {
-    box.innerHTML = '<div class="empty-state">No model weights yet.</div>';
+    box.innerHTML = `<div class="empty-state">${t("msg.noWeights")}</div>`;
     return;
   }
 
@@ -28,22 +28,22 @@ async function loadLearningPage() {
   setText("learning-hit3", formatPercent(latest.hit3));
   setText("learning-hit4", formatPercent(latest.hit4));
   setText("learning-avg", formatScore(latest.avg_match));
-  setText("learning-time", latest.created_at || "No learning yet");
+  setText("learning-time", latest.created_at || t("msg.noWeights"));
 
   renderLearningWeights(weights.current || latest.weights || {});
 
   renderLineChart(
     "learning-roi-chart",
-    "ROI",
+    t("chart.roi"),
     chronological.map((row) => ({ label: row.created_at, value: row.roi })),
     "rgba(13, 110, 253, 1)"
   );
 
   const labels = chronological.map((row) => row.created_at);
   renderMultiLineChart("learning-hit-chart", labels, [
-    { label: "Hit 2+", data: chronological.map((row) => row.hit2), borderColor: "rgba(25, 135, 84, 1)", backgroundColor: "rgba(25, 135, 84, 0.08)", tension: 0.25 },
-    { label: "Hit 3+", data: chronological.map((row) => row.hit3), borderColor: "rgba(255, 193, 7, 1)", backgroundColor: "rgba(255, 193, 7, 0.08)", tension: 0.25 },
-    { label: "Hit 4+", data: chronological.map((row) => row.hit4), borderColor: "rgba(220, 53, 69, 1)", backgroundColor: "rgba(220, 53, 69, 0.08)", tension: 0.25 },
+    { label: t("label.hit2"), data: chronological.map((row) => row.hit2), borderColor: "rgba(25, 135, 84, 1)", backgroundColor: "rgba(25, 135, 84, 0.08)", tension: 0.25 },
+    { label: t("label.hit3"), data: chronological.map((row) => row.hit3), borderColor: "rgba(255, 193, 7, 1)", backgroundColor: "rgba(255, 193, 7, 0.08)", tension: 0.25 },
+    { label: t("label.hit4"), data: chronological.map((row) => row.hit4), borderColor: "rgba(220, 53, 69, 1)", backgroundColor: "rgba(220, 53, 69, 0.08)", tension: 0.25 },
   ]);
 
   const weightHistory = weights.history || [];
@@ -77,4 +77,5 @@ async function refreshPage() {
 }
 
 bindRefresh(refreshPage);
-refreshPage();
+window.i18nReady.then(refreshPage);
+

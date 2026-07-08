@@ -3,7 +3,11 @@ import json
 import subprocess
 import csv
 from collections import Counter
+from datetime import datetime
 
+from core.ai_signal import calculate_ai_signal
+from core.auto_model_loop import apply_if_improved as run_auto_model_loop
+from core.auto_model_loop import status as auto_model_loop_status
 from core.explainer import explain_prediction
 from core.strategy_optimizer import compare_strategies, rank_strategies, recommend_best_strategy
 from web.cache import cache_stats, performance_stats
@@ -24,6 +28,13 @@ try:
 except Exception:
     MODEL_VERSION = "unknown"
 
+LATEST_DRAW_SQL = """
+SELECT *
+FROM draw_history
+ORDER BY date(draw_date) DESC, draw_no DESC
+LIMIT 1
+"""
+
 
 def number_fields():
     return ["n1", "n2", "n3", "n4", "n5"]
@@ -31,6 +42,38 @@ def number_fields():
 
 def row_numbers(row):
     return [int(row[field]) for field in number_fields()]
+
+
+def parse_draw_date(value):
+    if not value:
+        return datetime.min
+
+    text = str(value).strip()
+    if not text:
+        return datetime.min
+
+    text = text.split("T", 1)[0].split(" ", 1)[0]
+    for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%Y.%m.%d"):
+        try:
+            return datetime.strptime(text, fmt)
+        except ValueError:
+            continue
+    return datetime.min
+
+
+def draw_sort_key(row):
+    return (parse_draw_date(row["draw_date"]), str(row["draw_no"]))
+
+
+def choose_latest_draw(sql_latest, rows):
+    parsed_rows = [row for row in rows if parse_draw_date(row["draw_date"]) != datetime.min]
+    if not parsed_rows:
+        return sql_latest
+
+    parsed_latest = max(parsed_rows, key=draw_sort_key)
+    if sql_latest is None:
+        return parsed_latest
+    return max([sql_latest, parsed_latest], key=draw_sort_key)
 
 
 def get_connection():
@@ -298,6 +341,151 @@ def explain_prediction_by_id(prediction_id):
     return explain_prediction(prediction)
 
 
+def prize_by_match(match_count):
+    if match_count == 5:
+        return 8000000
+    if match_count == 4:
+        return 20000
+    if match_count == 3:
+        return 300
+    if match_count == 2:
+        return 50
+    return 0
+
+
+def prize_level_by_match(match_count):
+    if match_count == 5:
+        return "jackpot"
+    if match_count == 4:
+        return "fourth_prize"
+    if match_count == 3:
+        return "third_prize"
+    if match_count == 2:
+        return "second_prize"
+    return "none"
+
+
+def prediction_status(match_count, has_draw):
+    if not has_draw:
+        return "waiting_draw"
+    if match_count == 5:
+        return "jackpot"
+    if match_count >= 2:
+        return "winner"
+    return "no_prize"
+
+
+def analysis_badge_tone(match_count, status):
+    if status == "waiting_draw":
+        return "secondary"
+    if match_count == 5:
+        return "warning"
+    if match_count >= 3:
+        return "warning"
+    if match_count >= 2:
+        return "success"
+    return "secondary"
+
+
+def result_card_tone(match_count, status):
+    if status == "waiting_draw":
+        return "waiting"
+    if match_count == 5:
+        return "jackpot"
+    if match_count >= 3:
+        return "gold"
+    if match_count >= 2:
+        return "success"
+    return "neutral"
+
+
+def prediction_analysis_has_draw(latest_draw, predictions):
+    if not latest_draw or not latest_draw.get("numbers") or not predictions:
+        return False
+
+    latest_draw_date = parse_draw_date(latest_draw.get("drawDate"))
+    latest_prediction_date = max(
+        (
+            parse_draw_date(item.get("created_at") or item.get("predict_date"))
+            for item in predictions
+        ),
+        default=datetime.min,
+    )
+    if latest_prediction_date == datetime.min:
+        return True
+    return latest_draw_date.date() >= latest_prediction_date.date()
+
+
+def prediction_result_analysis():
+    data = dashboard_data()
+    latest_draw = data.get("latestDraw") or {}
+    predictions = latest_predictions()
+    winning_numbers = latest_draw.get("numbers") or []
+    winning_set = set(winning_numbers)
+    has_draw = prediction_analysis_has_draw(latest_draw, predictions)
+
+    rows = []
+    total_prize = 0
+    best_match = 0
+    total_hits = 0
+    highest_hit_rate = 0
+    analysis_period = predictions[0].get("created_at") if predictions else None
+
+    for prediction in predictions[:5]:
+        numbers = prediction.get("numbers") or []
+        matched_numbers = sorted(set(numbers) & winning_set) if has_draw else []
+        hits = len(matched_numbers) if has_draw else None
+        prize = prize_by_match(hits or 0) if has_draw else None
+        hit_rate = round((hits or 0) / 5 * 100, 2) if has_draw else None
+        level = prize_level_by_match(hits or 0) if has_draw else "waiting"
+        status = prediction_status(hits or 0, has_draw)
+        total_prize += prize or 0
+        best_match = max(best_match, hits or 0)
+        total_hits += hits or 0
+        highest_hit_rate = max(highest_hit_rate, hit_rate or 0)
+        rows.append({
+            "id": prediction.get("id"),
+            "set_no": prediction.get("set_no"),
+            "numbers": numbers,
+            "draw_no": latest_draw.get("drawNo"),
+            "draw_date": latest_draw.get("drawDate"),
+            "draw_numbers": winning_numbers if has_draw else [],
+            "final_score": prediction.get("final_score"),
+            "ai_score": prediction.get("ai_score"),
+            "hits": hits,
+            "matched_numbers": matched_numbers,
+            "prize": prize,
+            "prize_level": level,
+            "hit_rate": hit_rate,
+            "status": status,
+            "result_status": status,
+            "draw_status": "finished" if has_draw else "waiting_draw",
+            "badge_tone": analysis_badge_tone(hits or 0, status),
+            "card_tone": result_card_tone(hits or 0, status),
+        })
+
+    row_count = len(rows)
+    best_row = next((row for row in rows if (row["hits"] or 0) == best_match), None)
+    has_winner = any((row["hits"] or 0) >= 2 for row in rows) if has_draw else False
+    return {
+        "latestDraw": latest_draw,
+        "analysisPeriod": analysis_period,
+        "drawPeriod": latest_draw.get("drawNo"),
+        "drawNumbers": winning_numbers if has_draw else [],
+        "analyzedCount": row_count,
+        "bestMatch": best_match if has_draw else None,
+        "averageHits": round(total_hits / row_count, 2) if has_draw and row_count else None,
+        "highestHitRate": round(highest_hit_rate, 2) if has_draw and row_count else None,
+        "totalPrize": total_prize,
+        "bestSet": best_row["set_no"] if best_row else None,
+        "hasWinner": has_winner if has_draw else None,
+        "analysisTime": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "winningSet": best_row,
+        "status": "finished" if has_draw else "waiting_draw",
+        "rows": rows,
+    }
+
+
 def empty_dashboard_data():
     return {
         "hot": [],
@@ -314,7 +502,7 @@ def empty_dashboard_data():
 
 def get_recent_draw_rows(limit=100):
     if not DATABASE_PATH.exists():
-        return [], 0
+        return [], 0, None
 
     conn = sqlite3.connect(DATABASE_PATH)
     conn.row_factory = sqlite3.Row
@@ -327,15 +515,19 @@ def get_recent_draw_rows(limit=100):
         """
         SELECT *
         FROM draw_history
-        ORDER BY draw_date DESC, draw_no DESC
-        LIMIT ?
+        ORDER BY date(draw_date) DESC, draw_no DESC
         """,
-        (limit,),
     )
-    rows = list(cur.fetchall())
+    all_rows = list(cur.fetchall())
+    cur.execute(LATEST_DRAW_SQL)
+    sql_latest = cur.fetchone()
     conn.close()
 
-    return list(reversed(rows)), database_count
+    sorted_rows = sorted(all_rows, key=draw_sort_key, reverse=True)
+    latest_row = choose_latest_draw(sql_latest, sorted_rows)
+    recent_rows = list(reversed(sorted_rows[:limit]))
+
+    return recent_rows, database_count, latest_row
 
 
 def number_rankings(draws):
@@ -376,7 +568,7 @@ def ratio_data(draws):
 
 
 def dashboard_data(limit=100):
-    draws, database_count = get_recent_draw_rows(limit=limit)
+    draws, database_count, latest_row = get_recent_draw_rows(limit=limit)
     if not draws:
         return empty_dashboard_data()
 
@@ -391,7 +583,7 @@ def dashboard_data(limit=100):
         "spanTrend": trend_data(draws, "span"),
         "oddEven": odd_even,
         "lowHigh": low_high,
-        "latestDraw": recent_draws[-1],
+        "latestDraw": format_draw(latest_row) if latest_row else recent_draws[-1],
         "databaseCount": database_count,
         "recentDraws": recent_draws,
     }
@@ -863,12 +1055,356 @@ def strategy_lab():
     }
 
 
+def model_comparison():
+    base_strategies = [
+        prediction_strategy(),
+        backtest_strategy(),
+        learning_strategy(),
+    ]
+    strategies = base_strategies + [hybrid_strategy(base_strategies)]
+    rows = []
+    for item in strategies:
+        hit2 = item.get("hit2Rate", 0)
+        hit3 = item.get("hit3Rate", 0)
+        average_hits = clamp(hit2 / 100 * 2 + hit3 / 100 * 3, 0, 5)
+        rows.append({
+            "id": item.get("id"),
+            "name": item.get("name"),
+            "recentRoi": item.get("roi", 0),
+            "hitRate": hit2,
+            "averageHits": round(average_hits, 2),
+            "risk": item.get("risk", "Medium"),
+            "recommendation": recommendation(item.get("score", 0)),
+            "score": item.get("score", 0),
+            "sampleSize": item.get("sampleSize", 0),
+        })
+    ranking = sorted(rows, key=lambda item: item["score"], reverse=True)
+    return {
+        "models": rows,
+        "ranking": ranking,
+        "bestModel": ranking[0] if ranking else None,
+    }
+
+
 def strategy_optimizer():
     return {
         "strategies": rank_strategies(),
         "comparison": compare_strategies(),
         "recommendation": recommend_best_strategy(),
     }
+
+
+def prediction_quality_score(prediction):
+    final_score = parse_float(prediction.get("final_score"), default=0) * 100
+    ai_score = parse_float(prediction.get("ai_score"), default=0)
+    return final_score * 0.45 + ai_score * 0.55
+
+
+def best_prediction_pick(predictions, analysis):
+    rows = analysis.get("rows") or []
+    if rows and analysis.get("status") == "finished":
+        return max(
+            rows,
+            key=lambda row: (
+                row.get("hits") or 0,
+                row.get("prize") or 0,
+                prediction_quality_score(row),
+            ),
+        )
+
+    if not predictions:
+        return None
+    return max(predictions, key=prediction_quality_score)
+
+
+def dashboard_decision_trend(limit=30):
+    rows = prediction_history(limit=limit)
+    trend = []
+    for row in reversed(rows):
+        try:
+            report = explain_prediction(row)
+            value = report.get("decisionScore")
+        except Exception:
+            value = None
+        trend.append({
+            "label": row.get("created_at") or f"Set {row.get('set_no')}",
+            "value": round(parse_float(value, default=0), 2),
+        })
+    return trend
+
+
+def dashboard_pro():
+    data = dashboard_data()
+    predictions = latest_predictions()
+    analysis = prediction_result_analysis()
+    decision = decision_center()
+    strategy = strategy_lab()
+    optimizer = strategy_optimizer()
+    backtest = backtest_center()
+    performance = system_performance()
+    system = system_info()
+
+    latest_draw = data.get("latestDraw") or {}
+    best_pick = best_prediction_pick(predictions, analysis)
+    optimizer_recommendation = optimizer.get("recommendation") or {}
+    strategy_recommendation = strategy.get("recommendation") or {}
+    result_rows = analysis.get("rows") or []
+    best_result = (
+        max(result_rows, key=lambda row: (row.get("hits") or 0, row.get("prize") or 0))
+        if result_rows else None
+    )
+    total_prize = analysis.get("totalPrize") or 0
+    total_cost = len(result_rows) * 50 if result_rows else 0
+    roi = round(((total_prize - total_cost) / total_cost) * 100, 2) if total_cost else 0
+    roi_trend = (backtest.get("roiTrend") or [])[-30:]
+    hit_trend = ((backtest.get("hitTrend") or {}).get("hit2") or [])[-30:]
+
+    return {
+        "todaySummary": {
+            "latestDraw": latest_draw.get("drawNo"),
+            "drawDate": latest_draw.get("drawDate"),
+            "latestNumbers": latest_draw.get("numbers") or [],
+            "bestPick": best_pick,
+            "decisionScore": decision.get("decisionScore"),
+            "recommendation": decision.get("recommendation"),
+            "bestStrategy": optimizer_recommendation.get("strategy") or strategy_recommendation.get("strategy"),
+            "drawStatus": analysis.get("status"),
+        },
+        "todayPrediction": {
+            "rows": predictions[:5],
+            "bestSet": best_pick.get("set_no") if best_pick else None,
+        },
+        "todayResult": {
+            "status": analysis.get("status"),
+            "bestHit": analysis.get("bestMatch"),
+            "hitCount": best_result.get("hits") if best_result else None,
+            "matchedNumbers": best_result.get("matched_numbers") if best_result else [],
+            "prize": best_result.get("prize") if best_result else 0,
+            "roi": roi,
+            "bestSet": best_result.get("set_no") if best_result else None,
+        },
+        "decisionOverview": decision,
+        "strategyOverview": {
+            "strategies": optimizer.get("strategies") or strategy.get("strategies") or [],
+            "ranking": strategy.get("ranking") or [],
+            "roiCompare": strategy.get("roiCompare") or {},
+            "hitCompare": strategy.get("hitCompare") or {},
+            "riskCompare": strategy.get("riskCompare") or [],
+            "bestStrategy": optimizer_recommendation.get("strategy") or strategy_recommendation.get("strategy"),
+            "overallScore": optimizer_recommendation.get("overallScore") or strategy_recommendation.get("score"),
+            "risk": optimizer_recommendation.get("risk") or strategy_recommendation.get("risk"),
+            "confidence": optimizer_recommendation.get("confidence"),
+            "radar": optimizer,
+        },
+        "performance": {
+            **performance,
+            "databaseCount": system.get("databaseCount"),
+            "predictionCount": system.get("predictionCount"),
+            "learningCount": system.get("learningCount"),
+        },
+        "trend30": {
+            "roi": roi_trend,
+            "hitRate": hit_trend,
+            "decisionScore": dashboard_decision_trend(limit=30),
+        },
+    }
+
+
+def simple_dashboard():
+    pro = dashboard_pro()
+    analysis = prediction_result_analysis()
+    signal = ai_signal()
+    comparison = model_comparison()
+    auto_status = auto_model_loop_status()
+    predictions = pro.get("todayPrediction", {}).get("rows") or latest_predictions()
+    best_pick = pro.get("todaySummary", {}).get("bestPick")
+    if not best_pick and predictions:
+        best_pick = best_prediction_pick(predictions, analysis)
+
+    result_rows = analysis.get("rows") or []
+    total_prize = analysis.get("totalPrize") or 0
+    total_cost = len(result_rows) * 50 if result_rows else 0
+    roi = round(((total_prize - total_cost) / total_cost) * 100, 2) if total_cost else 0
+
+    return {
+        "currentPrediction": {
+            "recommendations": predictions[:5],
+            "bestPick": best_pick,
+            "aiSignal": signal,
+            "buyRecommendation": signal.get("signal") or pro.get("todaySummary", {}).get("recommendation"),
+            "shouldBuy": (signal.get("score") or 0) >= 68,
+        },
+        "lastResult": {
+            "drawNo": analysis.get("drawPeriod"),
+            "drawNumbers": analysis.get("drawNumbers") or [],
+            "predictions": result_rows[:5],
+            "totalPrize": total_prize,
+            "roi": roi,
+            "status": analysis.get("status"),
+        },
+        "modelComparison": comparison.get("models") or [],
+        "bestModel": comparison.get("bestModel"),
+        "autoModel": auto_status,
+    }
+
+
+def auto_model_status():
+    return auto_model_loop_status()
+
+
+def auto_model_run():
+    return run_auto_model_loop()
+
+
+def all_prediction_rows(limit=300):
+    if not DATABASE_PATH.exists():
+        return []
+
+    ensure_prediction_history_schema()
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT *
+        FROM prediction_history
+        ORDER BY id DESC
+        LIMIT ?
+        """,
+        (limit,),
+    )
+    rows = cur.fetchall()
+    conn.close()
+    return [format_prediction(row) for row in rows]
+
+
+def draw_history_rows(limit=400):
+    rows, _, _ = get_recent_draw_rows(limit=limit)
+    return [format_draw(row) for row in rows]
+
+
+def matching_draw_for_prediction(prediction, draws):
+    if not draws:
+        return {}
+    prediction_date = parse_draw_date(prediction.get("created_at"))
+    candidates = [
+        draw for draw in draws
+        if parse_draw_date(draw.get("drawDate")) >= prediction_date
+    ]
+    return candidates[0] if candidates else draws[-1]
+
+
+def prediction_match_row(prediction, draw):
+    draw_numbers = draw.get("numbers") or []
+    matched = sorted(set(prediction.get("numbers") or []) & set(draw_numbers))
+    hits = len(matched)
+    prize = prize_by_match(hits)
+    return {
+        **prediction,
+        "drawNo": draw.get("drawNo"),
+        "drawDate": draw.get("drawDate"),
+        "drawNumbers": draw_numbers,
+        "hits": hits,
+        "matchedNumbers": matched,
+        "hitRate": round(hits / 5 * 100, 2),
+        "prizeLevel": prize_level_by_match(hits),
+        "prize": prize,
+        "status": prediction_status(hits, True),
+    }
+
+
+def prediction_performance():
+    predictions = list(reversed(all_prediction_rows(limit=250)))
+    draws = draw_history_rows(limit=500)
+    rows = [prediction_match_row(prediction, matching_draw_for_prediction(prediction, draws)) for prediction in predictions]
+
+    return {
+        "hitTrend": [
+            {
+                "label": row.get("created_at") or f"Set {row.get('set_no')}",
+                "value": row["hits"],
+                "setNo": row.get("set_no"),
+            }
+            for row in rows
+        ],
+        "prizeTrend": [
+            {
+                "label": row.get("created_at") or f"Set {row.get('set_no')}",
+                "value": row["prize"],
+                "setNo": row.get("set_no"),
+            }
+            for row in rows
+        ],
+        "aiScoreVsHits": [
+            {"x": row.get("ai_score") or 0, "y": row["hits"], "setNo": row.get("set_no")}
+            for row in rows
+        ],
+        "finalScoreVsHits": [
+            {"x": round((row.get("final_score") or 0) * 100, 2), "y": row["hits"], "setNo": row.get("set_no")}
+            for row in rows
+        ],
+        "recentRows": list(reversed(rows[-50:])),
+    }
+
+
+def set_performance():
+    rows = prediction_performance()["recentRows"]
+    result = []
+    for set_no in range(1, 6):
+        set_rows = [row for row in rows if row.get("set_no") == set_no]
+        total_prize = sum(row.get("prize") or 0 for row in set_rows)
+        total_cost = len(set_rows) * 50
+        result.append({
+            "setNo": set_no,
+            "totalPrize": total_prize,
+            "averageHits": round(average([row.get("hits") for row in set_rows], default=0), 2),
+            "bestHit": max([row.get("hits") or 0 for row in set_rows], default=0),
+            "winCount": sum(1 for row in set_rows if (row.get("hits") or 0) >= 2),
+            "roi": round(((total_prize - total_cost) / total_cost) * 100, 2) if total_cost else 0,
+            "sampleSize": len(set_rows),
+        })
+    return {"sets": result}
+
+
+def hit_heatmap():
+    rows = prediction_performance()["recentRows"]
+    set_hit = {
+        set_no: {hit: 0 for hit in range(0, 6)}
+        for set_no in range(1, 6)
+    }
+    number_frequency = {number: 0 for number in range(1, 40)}
+
+    for row in rows:
+        set_no = row.get("set_no")
+        hits = row.get("hits") or 0
+        if set_no in set_hit:
+            set_hit[set_no][hits] += 1
+        for number in row.get("matchedNumbers") or []:
+            number_frequency[number] += 1
+
+    return {
+        "setHitCount": [
+            {"setNo": set_no, "hits": hit, "count": count}
+            for set_no, hit_map in set_hit.items()
+            for hit, count in hit_map.items()
+        ],
+        "numberHitFrequency": [
+            {"number": number, "count": count}
+            for number, count in number_frequency.items()
+        ],
+    }
+
+
+def ai_signal():
+    decision = decision_center()
+    predictions = latest_predictions()
+    learning = latest_learning()
+    backtest_summary = backtest_center().get("summary") or {}
+    return calculate_ai_signal(
+        decision=decision,
+        predictions=predictions,
+        learning=learning,
+        backtest=backtest_summary,
+    )
 
 
 def table_count(table_name):

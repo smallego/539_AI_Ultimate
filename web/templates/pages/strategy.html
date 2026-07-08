@@ -4,36 +4,36 @@
 <section class="row g-4">
   <div class="col-12 col-xl-4">
     <div class="panel h-100">
-      <div class="panel-title"><h2>Recommended Strategy</h2><span id="strategy-status" class="badge text-bg-light">Loading</span></div>
+      <div class="panel-title"><h2 data-i18n="label.recommendedStrategy">Recommended Strategy</h2><span id="strategy-status" class="badge text-bg-light" data-i18n="status.loading">Loading</span></div>
       <div class="decision-score score-primary mb-3">
         <strong id="recommended-score">0</strong>
-        <span>Strategy Score</span>
+        <span data-i18n="label.strategyScore">Strategy Score</span>
       </div>
-      <div class="mini-metric mb-3"><span>Strategy</span><strong id="recommended-strategy">-</strong></div>
-      <div class="mini-metric mb-3"><span>Risk</span><strong id="recommended-risk">-</strong></div>
-      <p id="recommended-reason" class="text-muted mb-0">Loading strategy recommendation...</p>
+      <div class="mini-metric mb-3"><span data-i18n="label.strategy">Strategy</span><strong id="recommended-strategy">-</strong></div>
+      <div class="mini-metric mb-3"><span data-i18n="label.risk">Risk</span><strong id="recommended-risk">-</strong></div>
+      <p id="recommended-reason" class="text-muted mb-0" data-i18n="msg.loadingRecommendation">Loading strategy recommendation...</p>
     </div>
   </div>
 
   <div class="col-12 col-xl-8">
     <div class="panel h-100">
-      <div class="panel-title"><h2>Strategy Ranking Table</h2><span class="text-muted small">Backtest / Learning / Prediction / Hybrid</span></div>
+      <div class="panel-title"><h2 data-i18n="label.strategyRankingTable">Strategy Ranking Table</h2><span class="text-muted small" data-i18n="label.strategySources">Backtest / Learning / Prediction / Hybrid</span></div>
       <div class="table-responsive strategy-table-wrap">
         <table class="table table-sm align-middle mb-0">
           <thead>
             <tr>
-              <th>Rank</th>
-              <th>Strategy</th>
-              <th>Source</th>
-              <th class="text-end">ROI</th>
-              <th class="text-end">Hit 2+</th>
-              <th class="text-end">Hit 3+</th>
-              <th>Risk</th>
-              <th class="text-end">Score</th>
+              <th data-i18n="label.rank">Rank</th>
+              <th data-i18n="label.strategy">Strategy</th>
+              <th data-i18n="label.source">Source</th>
+              <th class="text-end" data-i18n="chart.roi">ROI</th>
+              <th class="text-end" data-i18n="label.hit2">Hit 2+</th>
+              <th class="text-end" data-i18n="label.hit3">Hit 3+</th>
+              <th data-i18n="label.risk">Risk</th>
+              <th class="text-end" data-i18n="label.score">Score</th>
             </tr>
           </thead>
           <tbody id="strategy-ranking">
-            <tr><td colspan="8" class="text-muted">Loading...</td></tr>
+            <tr><td colspan="8" class="text-muted" data-i18n="status.loading">Loading</td></tr>
           </tbody>
         </table>
       </div>
@@ -42,15 +42,15 @@
 
   <div class="col-12 col-xl-5">
     <div class="panel h-100">
-      <div class="panel-title"><h2>Strategy Optimizer</h2><span id="optimizer-status" class="badge text-bg-light">Loading</span></div>
+      <div class="panel-title"><h2 data-i18n="label.strategyOptimizer">Strategy Optimizer</h2><span id="optimizer-status" class="badge text-bg-light" data-i18n="status.loading">Loading</span></div>
       <div class="decision-score score-success mb-3">
         <strong id="optimizer-score">0</strong>
-        <span>Overall Score</span>
+        <span data-i18n="label.overallScore">Overall Score</span>
       </div>
       <div class="row g-3 mb-3">
-        <div class="col-12"><div class="mini-metric"><span>Best Strategy</span><strong id="optimizer-best">-</strong></div></div>
-        <div class="col-6"><div class="mini-metric"><span>Risk</span><strong id="optimizer-risk">-</strong></div></div>
-        <div class="col-6"><div class="mini-metric"><span>Confidence</span><strong id="optimizer-confidence">-</strong></div></div>
+        <div class="col-12"><div class="mini-metric"><span data-i18n="label.bestStrategy">Best Strategy</span><strong id="optimizer-best">-</strong></div></div>
+        <div class="col-6"><div class="mini-metric"><span data-i18n="label.risk">Risk</span><strong id="optimizer-risk">-</strong></div></div>
+        <div class="col-6"><div class="mini-metric"><span data-i18n="label.confidence">label.confidence</span><strong id="optimizer-confidence">-</strong></div></div>
       </div>
       <div id="optimizer-reasons" class="optimizer-reasons"></div>
     </div>
@@ -58,27 +58,33 @@
 
   <div class="col-12 col-xl-7">
     <div class="panel chart-panel">
-      <div class="panel-title"><h2>Optimizer Radar</h2><span class="text-muted small">ROI / Hit / Risk / Decision / Confidence / Explain</span></div>
+      <div class="panel-title"><h2 data-i18n="label.optimizerRadar">Optimizer Radar</h2><span class="text-muted small" data-i18n="label.optimizerRadarAxes">label.optimizerRadarAxes</span></div>
       <canvas id="strategy-radar-chart" height="210"></canvas>
     </div>
   </div>
 
   <div class="col-12 col-xl-6">
     <div class="panel chart-panel">
-      <div class="panel-title"><h2>ROI Compare</h2></div>
+      <div class="panel-title"><h2 data-i18n="label.roiCompare">ROI Compare</h2></div>
       <canvas id="strategy-roi-chart" height="170"></canvas>
     </div>
   </div>
   <div class="col-12 col-xl-6">
     <div class="panel chart-panel">
-      <div class="panel-title"><h2>Hit Rate Compare</h2></div>
+      <div class="panel-title"><h2 data-i18n="label.hitRateCompare">Hit Rate Compare</h2></div>
       <canvas id="strategy-hit-chart" height="170"></canvas>
     </div>
   </div>
   <div class="col-12">
     <div class="panel">
-      <div class="panel-title"><h2>Risk Compare</h2><span class="text-muted small">Higher score means lower risk</span></div>
+      <div class="panel-title"><h2 data-i18n="label.riskCompare">Risk Compare</h2><span class="text-muted small" data-i18n="label.higherLowerRisk">Higher score means lower risk</span></div>
       <div id="risk-compare" class="risk-grid"></div>
+    </div>
+  </div>
+  <div class="col-12">
+    <div class="panel">
+      <div class="panel-title"><h2 data-i18n="decision.current_prediction">Current Prediction</h2><span class="text-muted small" data-i18n="label.explain">Explain</span></div>
+      <div id="strategy-explain-predictions" class="prediction-command-grid"></div>
     </div>
   </div>
 </section>

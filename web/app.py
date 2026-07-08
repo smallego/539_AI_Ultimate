@@ -69,7 +69,7 @@ async def api_logging_middleware(request: Request, call_next):
 def main():
     import uvicorn
 
-    uvicorn.run("web.app:app", host="127.0.0.1", port=8000, reload=False)
+    uvicorn.run("web.app:app", host="0.0.0.0", port=8000, reload=False)
 
 
 if __name__ == "__main__":

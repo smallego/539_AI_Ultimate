@@ -1,71 +1,202 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="row g-3 mb-4">
-  <div class="col-6 col-xl-3"><div class="kpi-card"><span>Total Draws</span><strong id="draw-count">0</strong></div></div>
-  <div class="col-6 col-xl-3"><div class="kpi-card"><span>Predictions</span><strong id="prediction-count">0</strong></div></div>
-  <div class="col-6 col-xl-3"><div class="kpi-card"><span>Data Window</span><strong id="data-window-count">0</strong></div></div>
-  <div class="col-6 col-xl-3"><div class="kpi-card"><span>Dashboard File</span><strong id="dashboard-status">-</strong></div></div>
-</section>
-
-<section class="panel mb-4">
-  <div class="panel-title"><h2>System Health</h2><span id="system-health-status" class="badge text-bg-light">Checking</span></div>
-  <div class="health-grid">
-    <div class="health-item" id="health-database"><span>Database</span><strong>-</strong></div>
-    <div class="health-item" id="health-api"><span>API</span><strong>-</strong></div>
-    <div class="health-item" id="health-learning"><span>Learning</span><strong>-</strong></div>
-    <div class="health-item" id="health-dashboard"><span>Dashboard</span><strong>-</strong></div>
-    <div class="health-item" id="health-prediction"><span>Prediction</span><strong>-</strong></div>
-    <div class="health-item" id="health-runAll"><span>RunAll</span><strong>-</strong></div>
+<section class="dashboard-mode-bar mb-4">
+  <div>
+    <h2 class="mb-1" data-i18n="dashboard.simple_home">Simple Dashboard</h2>
+    <p class="text-muted mb-0" data-i18n="dashboard.simple_home_hint">Key decisions only.</p>
+  </div>
+  <div class="btn-group dashboard-mode-toggle" role="group" aria-label="Dashboard mode">
+    <button class="btn btn-primary" type="button" data-dashboard-mode="simple" data-i18n="dashboard.simple_mode">Simple Mode</button>
+    <button class="btn btn-outline-primary" type="button" data-dashboard-mode="advanced" data-i18n="dashboard.advanced_mode">Advanced Mode</button>
   </div>
 </section>
 
-<section class="panel mb-4">
-  <div class="panel-title"><h2>System Performance</h2><span id="performance-status" class="badge text-bg-light">Loading</span></div>
-  <div class="row g-3 mb-3">
-    <div class="col-6 col-xl-2"><div class="mini-metric"><span>Average API Time</span><strong id="perf-average-api">0 ms</strong></div></div>
-    <div class="col-6 col-xl-2"><div class="mini-metric"><span>Cache Hit</span><strong id="perf-cache-hit">0</strong></div></div>
-    <div class="col-6 col-xl-2"><div class="mini-metric"><span>Cache Miss</span><strong id="perf-cache-miss">0</strong></div></div>
-    <div class="col-6 col-xl-2"><div class="mini-metric"><span>Cache Hit Rate</span><strong id="perf-cache-rate">0%</strong></div></div>
-    <div class="col-6 col-xl-2"><div class="mini-metric"><span>Memory</span><strong id="perf-memory">-</strong></div></div>
-    <div class="col-6 col-xl-2"><div class="mini-metric"><span>CPU</span><strong id="perf-cpu">-</strong></div></div>
-  </div>
-  <div class="table-responsive performance-table-wrap">
-    <table class="table table-sm align-middle mb-0">
-      <thead><tr><th>Time</th><th>Method</th><th>Path</th><th class="text-end">Duration</th><th>Status</th></tr></thead>
-      <tbody id="performance-recent"><tr><td colspan="5" class="text-muted">Loading...</td></tr></tbody>
-    </table>
-  </div>
-</section>
+<div id="simple-dashboard" class="dashboard-mode-panel">
+  <section class="simple-dashboard-grid mb-4">
+    <div class="panel simple-card simple-primary-card">
+      <div class="panel-title">
+        <h2 data-i18n="dashboard.current_prediction">Current Prediction</h2>
+        <span id="simple-buy-badge" class="badge text-bg-secondary">-</span>
+      </div>
+      <div class="simple-signal">
+        <div>
+          <span data-i18n="dashboard.buy_recommendation">Buy Recommendation</span>
+          <strong id="simple-buy-recommendation">-</strong>
+        </div>
+        <div>
+          <span data-i18n="signal.title">AI Buy Signal</span>
+          <strong id="simple-ai-signal">-</strong>
+        </div>
+      </div>
+      <div class="simple-best-pick">
+        <span data-i18n="dashboard.best_pick">Best Pick</span>
+        <strong id="simple-best-set">-</strong>
+        <div id="simple-best-numbers" class="number-pill-row"></div>
+        <button id="simple-explain-button" class="btn btn-sm btn-outline-primary" type="button" data-i18n="label.explain">Explain</button>
+      </div>
+      <div id="simple-prediction-list" class="simple-list mt-3"></div>
+    </div>
 
-<section class="row g-4">
-  <div class="col-12 col-xl-6">
-    <div class="panel chart-panel">
-      <div class="panel-title"><h2>Sum Trend</h2><span id="data-window-status" class="badge text-bg-light">Loading</span></div>
-      <canvas id="sum-trend-chart" height="150"></canvas>
+    <div class="panel simple-card">
+      <div class="panel-title">
+        <h2 data-i18n="dashboard.last_result">Last Result</h2>
+        <span id="simple-result-status" class="badge text-bg-light">-</span>
+      </div>
+      <div class="simple-result-head">
+        <span data-i18n="dashboard.latest_draw">Latest Draw</span>
+        <strong id="simple-draw-no">-</strong>
+      </div>
+      <div id="simple-draw-numbers" class="number-pill-row mb-3"></div>
+      <div id="simple-result-list" class="simple-list"></div>
+      <div class="simple-kpi-row mt-3">
+        <div><span data-i18n="dashboard.total_prize">Total Prize</span><strong id="simple-total-prize">-</strong></div>
+        <div><span data-i18n="chart.roi">ROI</span><strong id="simple-roi">-</strong></div>
+      </div>
     </div>
-  </div>
-  <div class="col-12 col-xl-6">
-    <div class="panel chart-panel">
-      <div class="panel-title"><h2>Hot Numbers TOP10</h2><span class="text-muted small">Recent 100 draws</span></div>
-      <canvas id="hot-chart" height="150"></canvas>
+  </section>
+
+  <section class="simple-dashboard-grid">
+    <div class="panel simple-card">
+      <div class="panel-title">
+        <h2 data-i18n="dashboard.model_comparison">Model Comparison</h2>
+        <span id="simple-best-model" class="badge text-bg-primary">-</span>
+      </div>
+      <div class="simple-table-wrap">
+        <table class="table simple-model-table mb-0">
+          <thead>
+            <tr>
+              <th data-i18n="label.model">Model</th>
+              <th data-i18n="dashboard.recent_roi">Recent ROI</th>
+              <th data-i18n="prediction.hit_rate">Hit Rate</th>
+              <th data-i18n="dashboard.average_hits">Average Hits</th>
+              <th data-i18n="label.risk">Risk</th>
+              <th data-i18n="dashboard.recommendation_level">Recommendation</th>
+            </tr>
+          </thead>
+          <tbody id="simple-model-comparison"></tbody>
+        </table>
+      </div>
     </div>
-  </div>
-  <div class="col-12 col-xl-6">
-    <div class="panel chart-panel">
-      <div class="panel-title"><h2>Cold Numbers TOP10</h2><span class="text-muted small">Recent 100 draws</span></div>
-      <canvas id="cold-chart" height="150"></canvas>
+
+    <div class="panel simple-card">
+      <div class="panel-title">
+        <h2 data-i18n="dashboard.auto_model_loop">AI Auto Model Loop</h2>
+        <button class="btn btn-sm btn-outline-primary" type="button" data-auto-model-run data-i18n="dashboard.run_auto_model">Run Auto Model</button>
+      </div>
+      <div class="auto-model-grid">
+        <div><span data-i18n="dashboard.current_model_version">Current Model Version</span><strong id="auto-model-version">-</strong></div>
+        <div><span data-i18n="dashboard.last_fix_time">Last Fix Time</span><strong id="auto-last-run">-</strong></div>
+        <div><span data-i18n="dashboard.before_fix">Before Fix</span><strong id="auto-old-roi">-</strong></div>
+        <div><span data-i18n="dashboard.after_fix">After Fix</span><strong id="auto-new-roi">-</strong></div>
+        <div><span data-i18n="dashboard.backtest_validation">Backtest Validation</span><strong id="auto-backtest-result">-</strong></div>
+        <div><span data-i18n="dashboard.adoption_status">Adoption</span><strong id="auto-adopted">-</strong></div>
+      </div>
+      <div id="auto-model-reason" class="simple-reason mt-3">-</div>
     </div>
-  </div>
-  <div class="col-12 col-xl-3">
-    <div class="panel chart-panel"><div class="panel-title"><h2>Odd / Even</h2></div><canvas id="odd-even-chart" height="210"></canvas></div>
-  </div>
-  <div class="col-12 col-xl-3">
-    <div class="panel chart-panel"><div class="panel-title"><h2>Low / High</h2></div><canvas id="low-high-chart" height="210"></canvas></div>
-  </div>
-</section>
+  </section>
+</div>
+
+<div id="advanced-dashboard" class="dashboard-mode-panel d-none">
+  <section class="executive-hero mb-4">
+    <div class="executive-hero-main">
+      <div class="panel-title">
+        <h2 data-i18n="signal.title">AI Buy Signal</h2>
+        <span id="signal-badge" class="badge text-bg-secondary" data-i18n="status.loading">Loading</span>
+      </div>
+      <div id="signal-stars" class="decision-stars">-----</div>
+      <div class="executive-signal-row">
+        <strong id="signal-score">0</strong>
+        <div>
+          <span data-i18n="signal.score">Signal Score</span>
+          <p id="signal-name">-</p>
+        </div>
+      </div>
+      <div id="signal-reason" class="executive-reason-list">-</div>
+    </div>
+    <div class="executive-hero-metrics">
+      <div class="exec-kpi-card"><span data-i18n="label.confidence">label.confidence</span><strong id="signal-confidence">-</strong></div>
+      <div class="exec-kpi-card"><span data-i18n="label.risk">Risk</span><strong id="signal-risk">-</strong></div>
+      <div class="exec-kpi-card"><span data-i18n="dashboard.latest_draw">Latest Draw</span><strong id="hero-latest-draw">-</strong></div>
+      <div class="exec-kpi-card"><span data-i18n="dashboard.draw_status">Draw Status</span><strong id="hero-draw-status">-</strong></div>
+    </div>
+  </section>
+
+  <section class="executive-grid mb-4">
+    <div class="panel executive-card best-pick-panel">
+      <div class="panel-title">
+        <h2 data-i18n="dashboard.best_pick">Best Pick</h2>
+        <span id="best-pick-badge" class="badge text-bg-warning">-</span>
+      </div>
+      <div id="best-pick-card" class="best-pick-card"></div>
+      <div id="top-picks" class="top-pick-list"></div>
+    </div>
+
+    <div class="panel executive-card">
+      <div class="panel-title">
+        <h2 data-i18n="dashboard.current_draw_result">Current Draw Result</h2>
+        <span id="today-result-status" class="badge text-bg-light">-</span>
+      </div>
+      <div class="executive-kpi-grid">
+        <div class="exec-kpi-card"><span data-i18n="dashboard.latest_draw">Latest Draw</span><strong id="result-latest-draw">-</strong></div>
+        <div class="exec-kpi-card"><span data-i18n="prediction.best_match">Best Match</span><strong id="result-best-hit">-</strong></div>
+        <div class="exec-kpi-card"><span data-i18n="prediction.best_set">Best Set</span><strong id="result-best-set">-</strong></div>
+        <div class="exec-kpi-card"><span data-i18n="prediction.total_prize">Total Prize</span><strong id="result-total-prize">-</strong></div>
+        <div class="exec-kpi-card"><span data-i18n="chart.roi">ROI</span><strong id="result-roi">-</strong></div>
+      </div>
+      <div id="result-matched" class="matched-number-row mt-3"></div>
+    </div>
+  </section>
+
+  <section class="panel executive-card mb-4">
+    <div class="panel-title">
+      <h2 data-i18n="dashboard.recent_performance">Recent Performance</h2>
+      <span id="performance-status" class="badge text-bg-light" data-i18n="status.loading">Loading</span>
+    </div>
+    <div class="executive-kpi-grid executive-kpi-grid-five mb-3">
+      <div class="exec-kpi-card"><span data-i18n="chart.roi">ROI</span><strong id="perf-roi">-</strong></div>
+      <div class="exec-kpi-card"><span data-i18n="prediction.hit_rate">Hit Rate</span><strong id="perf-hit-rate">-</strong></div>
+      <div class="exec-kpi-card"><span data-i18n="prediction.average_hit">Average Hits</span><strong id="perf-average-hits">-</strong></div>
+      <div class="exec-kpi-card"><span data-i18n="prediction.prize">Prize</span><strong id="perf-prize">-</strong></div>
+      <div class="exec-kpi-card"><span data-i18n="label.averageApiTime">Average API Time</span><strong id="perf-average-api">-</strong></div>
+    </div>
+    <div class="executive-chart-wrap">
+      <canvas id="performance-trend-chart"></canvas>
+    </div>
+  </section>
+
+  <section class="panel executive-card mb-4">
+    <div class="panel-title">
+      <h2 data-i18n="dashboard.strategy_summary">Strategy Summary</h2>
+      <span id="strategy-overview-status" class="badge text-bg-light" data-i18n="status.loading">Loading</span>
+    </div>
+    <div class="executive-strategy-layout">
+      <div>
+        <div class="executive-kpi-grid mb-3">
+          <div class="exec-kpi-card"><span data-i18n="label.bestStrategy">Best Strategy</span><strong id="strategy-best">-</strong></div>
+          <div class="exec-kpi-card"><span data-i18n="label.score">Strategy Score</span><strong id="strategy-overall-score">-</strong></div>
+          <div class="exec-kpi-card"><span data-i18n="chart.roi">ROI</span><strong id="strategy-roi">-</strong></div>
+          <div class="exec-kpi-card"><span data-i18n="dashboard.win_rate">Win Rate</span><strong id="strategy-win-rate">-</strong></div>
+        </div>
+        <div id="strategy-explain" class="strategy-explain-box"></div>
+      </div>
+      <div class="executive-chart-wrap">
+        <canvas id="strategy-summary-chart"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel executive-card">
+    <div class="panel-title"><h2 data-i18n="dashboard.quick_actions">Quick Actions</h2></div>
+    <div class="quick-actions quick-actions-row">
+      <button class="btn btn-primary" type="button" data-dashboard-action data-action-name="Prediction" data-api-url="/api/predict" data-i18n="action.predict">Prediction</button>
+      <button class="btn btn-outline-primary" type="button" data-dashboard-action data-action-name="Run All" data-api-url="/api/run-all" data-i18n="action.runAll">Run All</button>
+      <button class="btn btn-outline-primary" type="button" data-dashboard-action data-action-name="API Update" data-api-url="/api/update" data-i18n="action.update">API Update</button>
+    </div>
+  </section>
+</div>
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/pages/dashboard.js"></script>
+<script src="/static/js/pages/dashboard.js?v=9.0.0"></script>
 {% endblock %}

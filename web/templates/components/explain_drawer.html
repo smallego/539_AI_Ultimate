@@ -1,0 +1,28 @@
+<div class="offcanvas offcanvas-end explain-drawer" tabindex="-1" id="explain-drawer" aria-labelledby="explain-drawer-title">
+  <div class="offcanvas-header">
+    <div>
+      <h5 class="offcanvas-title" id="explain-drawer-title" data-i18n="explain.drawer_title">Explain Report</h5>
+      <small id="explain-subtitle" class="text-muted" data-i18n="label.explainability">Prediction explainability</small>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <div class="decision-score score-primary mb-3">
+      <div id="explain-stars" class="decision-stars">-----</div>
+      <strong id="explain-score">0</strong>
+      <span data-i18n="label.decisionScore">label.decisionScore</span>
+    </div>
+    <div class="row g-3 mb-3">
+      <div class="col-6"><div class="mini-metric"><span data-i18n="label.confidence">label.confidence</span><strong id="explain-confidence">-</strong></div></div>
+      <div class="col-6"><div class="mini-metric"><span data-i18n="label.risk">Risk</span><strong id="explain-risk">-</strong></div></div>
+    </div>
+    <div class="panel-lite mb-3">
+      <h6 data-i18n="label.reasons">Reasons</h6>
+      <div id="explain-reasons" class="explain-reasons"></div>
+    </div>
+    <div class="panel-lite">
+      <h6 data-i18n="label.explainTimeline">Explain Timeline</h6>
+      <div id="explain-timeline" class="explain-timeline"></div>
+    </div>
+  </div>
+</div>

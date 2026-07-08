@@ -4,7 +4,7 @@ import subprocess
 import sys
 
 from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
 from web.config import (
@@ -17,10 +17,16 @@ from web.config import (
     WEB_DIR,
 )
 from web.cache import cached, clear_cache
+from web.export_excel import build_excel_report, excel_filename
+from web.export_service import build_pdf, build_xlsx, export_filename
 from web.logger import log_event
 from web.services import (
+    ai_signal,
+    auto_model_run,
+    auto_model_status,
     backtest_center,
     dashboard_data,
+    dashboard_pro,
     decision_center,
     ensure_prediction_history_schema,
     explain_latest_predictions,
@@ -30,7 +36,13 @@ from web.services import (
     latest_predictions,
     learning_history,
     learning_weights,
+    hit_heatmap,
+    model_comparison,
     prediction_history,
+    prediction_performance,
+    prediction_result_analysis,
+    set_performance,
+    simple_dashboard,
     strategy_lab,
     strategy_optimizer,
     system_performance,
@@ -282,6 +294,39 @@ def api_dashboard_data():
     return cached("dashboard_data", dashboard_data)
 
 
+@router.get("/api/dashboard-pro")
+def api_dashboard_pro():
+    log_event("api.dashboard_pro", "SUCCESS")
+    return cached("dashboard_pro", dashboard_pro)
+
+
+@router.get("/api/simple-dashboard")
+def api_simple_dashboard():
+    log_event("api.simple_dashboard", "SUCCESS")
+    return cached("simple_dashboard", simple_dashboard)
+
+
+@router.get("/api/model-comparison")
+def api_model_comparison():
+    log_event("api.model_comparison", "SUCCESS")
+    return cached("model_comparison", model_comparison)
+
+
+@router.get("/api/auto-model/status")
+def api_auto_model_status():
+    log_event("api.auto_model.status", "SUCCESS")
+    return auto_model_status()
+
+
+@router.post("/api/auto-model/run")
+def api_auto_model_run():
+    log_event("api.auto_model.run", "START")
+    result = auto_model_run()
+    clear_cache()
+    log_event("api.auto_model.run", "SUCCESS", adopted=result.get("adopted"), reason=result.get("reason"))
+    return result
+
+
 @router.get("/api/decision")
 def api_decision():
     log_event("api.decision", "SUCCESS")
@@ -322,6 +367,36 @@ def api_predictions_latest():
 def api_predictions_history():
     log_event("api.predictions.history", "SUCCESS")
     return cached("predictions_history_50", lambda: prediction_history(limit=50))
+
+
+@router.get("/api/prediction-analysis")
+def api_prediction_analysis():
+    log_event("api.prediction_analysis", "SUCCESS")
+    return cached("prediction_analysis", prediction_result_analysis)
+
+
+@router.get("/api/prediction-performance")
+def api_prediction_performance():
+    log_event("api.prediction_performance", "SUCCESS")
+    return cached("prediction_performance", prediction_performance)
+
+
+@router.get("/api/set-performance")
+def api_set_performance():
+    log_event("api.set_performance", "SUCCESS")
+    return cached("set_performance", set_performance)
+
+
+@router.get("/api/hit-heatmap")
+def api_hit_heatmap():
+    log_event("api.hit_heatmap", "SUCCESS")
+    return cached("hit_heatmap", hit_heatmap)
+
+
+@router.get("/api/ai-signal")
+def api_ai_signal():
+    log_event("api.ai_signal", "SUCCESS")
+    return cached("ai_signal", ai_signal)
 
 
 @router.get("/api/explain/latest")
@@ -384,3 +459,50 @@ def api_backtest_chart():
         "best_match": [row["best_match"] for row in rows],
         "cumulative_roi": [row["cumulative_roi"] for row in rows],
     }
+
+
+@router.get("/api/export/excel")
+def api_export_excel():
+    log_event("api.export.excel", "SUCCESS")
+    return StreamingResponse(
+        build_excel_report(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{excel_filename()}"'},
+    )
+
+
+@router.get("/api/export/pdf")
+def api_export_pdf_report():
+    log_event("api.export.pdf.report", "SUCCESS")
+    filename = excel_filename().replace(".xlsx", ".pdf")
+    return StreamingResponse(
+        build_pdf("dashboard"),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/api/export/{report_type}.xlsx")
+def api_export_xlsx(report_type: str):
+    if report_type not in {"dashboard", "prediction", "decision", "strategy"}:
+        return JSONResponse({"error": "Unsupported report type"}, status_code=404)
+    log_event("api.export.xlsx", "SUCCESS", report_type=report_type)
+    filename = export_filename(report_type, "xlsx")
+    return StreamingResponse(
+        build_xlsx(report_type),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/api/export/{report_type}.pdf")
+def api_export_pdf(report_type: str):
+    if report_type not in {"dashboard", "prediction", "decision", "strategy"}:
+        return JSONResponse({"error": "Unsupported report type"}, status_code=404)
+    log_event("api.export.pdf", "SUCCESS", report_type=report_type)
+    filename = export_filename(report_type, "pdf")
+    return StreamingResponse(
+        build_pdf(report_type),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

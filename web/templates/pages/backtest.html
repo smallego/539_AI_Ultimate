@@ -3,20 +3,18 @@
 {% block content %}
 <section class="panel">
   <div class="panel-title">
-    <h2>Strategy Backtest Center</h2>
+    <h2 data-i18n="label.strategyBacktestCenter">Strategy Backtest Center</h2>
     <div class="d-flex gap-2 align-items-center">
-      <span id="backtest-center-status" class="badge text-bg-light">Loading</span>
-      <button class="btn btn-primary btn-sm" data-action="/api/backtest">Run Backtest</button>
-      <button class="btn btn-outline-primary btn-sm" data-action="/api/run-all">Run All</button>
+      <span id="backtest-center-status" class="badge text-bg-light" data-i18n="status.loading">Loading</span>
     </div>
   </div>
   <div class="row g-3 mb-4">
-    <div class="col-6 col-xl-2"><div class="mini-metric"><span>Total Periods</span><strong id="bt-total-periods">0</strong></div></div>
-    <div class="col-6 col-xl-2"><div class="mini-metric"><span>Cumulative ROI</span><strong id="bt-cumulative-roi">-</strong></div></div>
-    <div class="col-6 col-xl-2"><div class="mini-metric"><span>Hit 2+</span><strong id="bt-hit2">-</strong></div></div>
-    <div class="col-6 col-xl-2"><div class="mini-metric"><span>Hit 3+</span><strong id="bt-hit3">-</strong></div></div>
-    <div class="col-6 col-xl-2"><div class="mini-metric"><span>Avg Match</span><strong id="bt-avg-match">-</strong></div></div>
-    <div class="col-6 col-xl-2"><div class="mini-metric"><span>Losing Streak</span><strong id="bt-losing-streak">-</strong></div></div>
+    <div class="col-6 col-xl-2"><div class="mini-metric"><span data-i18n="label.totalPeriods">Total Periods</span><strong id="bt-total-periods">0</strong></div></div>
+    <div class="col-6 col-xl-2"><div class="mini-metric"><span data-i18n="label.cumulativeRoi">Cumulative ROI</span><strong id="bt-cumulative-roi">-</strong></div></div>
+    <div class="col-6 col-xl-2"><div class="mini-metric"><span data-i18n="label.hit2">Hit 2+</span><strong id="bt-hit2">-</strong></div></div>
+    <div class="col-6 col-xl-2"><div class="mini-metric"><span data-i18n="label.hit3">Hit 3+</span><strong id="bt-hit3">-</strong></div></div>
+    <div class="col-6 col-xl-2"><div class="mini-metric"><span data-i18n="label.avgMatch">Avg Match</span><strong id="bt-avg-match">-</strong></div></div>
+    <div class="col-6 col-xl-2"><div class="mini-metric"><span data-i18n="label.losingStreak">Losing Streak</span><strong id="bt-losing-streak">-</strong></div></div>
   </div>
   <div class="row g-4 mb-4">
     <div class="col-12 col-xl-5"><canvas id="bt-roi-chart" height="180"></canvas></div>
@@ -25,11 +23,10 @@
   </div>
   <div class="table-responsive backtest-table-wrap">
     <table class="table table-sm align-middle mb-0">
-      <thead><tr><th>Date</th><th>Draw</th><th class="text-end">Best</th><th class="text-end">Period ROI</th><th class="text-end">Cumulative ROI</th><th>Winning</th></tr></thead>
-      <tbody id="bt-recent-rows"><tr><td colspan="6" class="text-muted">Loading...</td></tr></tbody>
+      <thead><tr><th data-i18n="label.date">Date</th><th data-i18n="label.draw">Draw</th><th class="text-end" data-i18n="label.best">Best</th><th class="text-end" data-i18n="label.periodRoi">Period ROI</th><th class="text-end" data-i18n="label.cumulativeRoi">Cumulative ROI</th><th data-i18n="label.winning">Winning</th></tr></thead>
+      <tbody id="bt-recent-rows"><tr><td colspan="6" class="text-muted" data-i18n="status.loading">Loading</td></tr></tbody>
     </table>
   </div>
-  <pre id="output" class="mt-4">Ready.</pre>
 </section>
 {% endblock %}
 
